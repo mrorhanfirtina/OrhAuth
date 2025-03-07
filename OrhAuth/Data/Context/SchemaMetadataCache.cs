@@ -16,7 +16,7 @@ namespace OrhAuth.Data.Context
 
         private static readonly object _lockObject = new object();
 
-        /// <summary>
+        /// <summary> 
         /// Bir tip için genişletilmiş özellikleri döndürür
         /// </summary>
         public static List<PropertyMetadata> GetExtendedProperties(Type entityType)
