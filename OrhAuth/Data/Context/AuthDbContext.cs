@@ -35,49 +35,30 @@ namespace OrhAuth.Data.Context
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<User>()
-                .HasKey(u => u.Id)
-                .Property(u => u.Email).IsRequired().HasMaxLength(100);
+            // Assembly içindeki tüm EntityTypeConfiguration sınıflarını otomatik olarak kaydet
+            var typesToRegister = Assembly.GetExecutingAssembly().GetTypes()
+                .Where(type => !string.IsNullOrEmpty(type.Namespace) &&
+                       type.BaseType != null &&
+                       type.BaseType.IsGenericType &&
+                       type.BaseType.GetGenericTypeDefinition() == typeof(EntityTypeConfiguration<>));
 
-            modelBuilder.Entity<OperationClaim>()
-                .HasKey(o => o.Id)
-                .Property(o => o.Name).IsRequired().HasMaxLength(100);
+            foreach (var type in typesToRegister)
+            {
+                dynamic configurationInstance = Activator.CreateInstance(type);
+                modelBuilder.Configurations.Add(configurationInstance);
+            }
 
-            modelBuilder.Entity<UserOperationClaim>()
-                .HasKey(uo => uo.Id);
-
-            modelBuilder.Entity<UserOperationClaim>()
-                .HasRequired(uo => uo.User)
-                .WithMany(u => u.UserOperationClaims)
-                .HasForeignKey(uo => uo.UserId);
-
-            modelBuilder.Entity<UserOperationClaim>()
-                .HasRequired(uo => uo.OperationClaim)
-                .WithMany(o => o.UserOperationClaims)
-                .HasForeignKey(uo => uo.OperationClaimId);
-
-            modelBuilder.Entity<RefreshToken>()
-                .HasKey(rt => rt.Id);
-
-            modelBuilder.Entity<RefreshToken>()
-                .HasRequired(rt => rt.User)
-                .WithMany(u => u.RefreshTokens)
-                .HasForeignKey(rt => rt.UserId);
-
-            base.OnModelCreating(modelBuilder);
-
-            // Dinamik alanları tarar ve ekler - her zaman çalıştır
+            // Dinamik alanları eklemek için mevcut mekanizmayı kullan
             try
             {
-                // Debug log ekle
-                System.Diagnostics.Debug.WriteLine("Genişletilmiş özellikler aranıyor...");
                 RegisterExtendedProperties(modelBuilder);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Genişletilmiş özellikler eklenirken hata: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"Hata detayı: {ex.StackTrace}");
+                // Hata durumunu düzgün şekilde logla
             }
+
+            base.OnModelCreating(modelBuilder);
         }
 
         private void RegisterExtendedProperties(DbModelBuilder modelBuilder)

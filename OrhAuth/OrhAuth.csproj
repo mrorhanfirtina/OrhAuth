@@ -98,6 +98,10 @@
     <Compile Include="Configurations\OrhAuthOptions.cs" />
     <Compile Include="Data\Context\AuthDbContext.cs" />
     <Compile Include="Data\Context\SchemaMetadataCache.cs" />
+    <Compile Include="Data\EntityConfigurations\OperationClaimConfiguration.cs" />
+    <Compile Include="Data\EntityConfigurations\RefreshTokenConfiguration.cs" />
+    <Compile Include="Data\EntityConfigurations\UserConfiguration.cs" />
+    <Compile Include="Data\EntityConfigurations\UserOperationClaimConfiguration.cs" />
     <Compile Include="Data\Repositories\Abstract\IEntityRepository.cs" />
     <Compile Include="Data\Repositories\Concrete\EfEntityRepositoryBase.cs" />
     <Compile Include="Extensions\OrhAuthExtensions.cs" />
