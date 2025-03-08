@@ -165,6 +165,40 @@ public class ExtendedUser : User
 }
 ```
 
+### 2. OrhAuthOptions'a Genişletilmiş User Type'ı Belirtin
+```csharp
+	var authOptions = new OrhAuthOptions
+	{
+	ConnectionString = "your_connection_string",
+	CreateDatabaseIfNotExists = true,
+	TokenSecurityKey = "your_security_key",
+	TokenIssuer = "your_issuer",
+	TokenAudience = "your_audience",
+	TokenExpirationMinutes = 60,
+	// Genişletilmiş user type'ı belirt
+	ExtendedUserType = typeof(ExtendedUser) // Önemli: Bu satırı eklemeyi unutmayın!
+	};
+	IAuthService authService = OrhAuthExtensions.ConfigureOrhAuth(authOptions);
+```
+
+## 3. Veritabanı Oluşturma
+
+- Eğer veritabanı ilk kez oluşturuluyorsa (`CreateDatabaseIfNotExists = true`), genişletilmiş alanlar otomatik olarak eklenecektir.
+- Eğer veritabanı zaten mevcutsa, yeni alanların eklenmesi için veritabanını manuel olarak silin (yeniden oluşturulacaktır)
+
+### Önemli Notlar
+
+- ExtendedUser sınıfınızın public olduğundan emin olun
+- OrhAuth.Attributes namespace'ini doğru şekilde import ettiğinizden emin olun
+- Veritabanına yeterli erişim yetkilerinizin olduğundan emin olun
+- [ExtendUser] özniteliği aşağıdaki özellikleri destekler:
+  - maxLength: Alan uzunluğu
+  - isRequired: Zorunlu alan
+  - isUnique: Benzersiz alan
+  - dbType: Veritabanı tipi
+  - description: Alan açıklaması
+
+
 Bu genişletme özellikleri, OrhAuth ilk çalıştırıldığında veritabanına otomatik olarak eklenir.
 
 #### `ExtendUserAttribute` Parametreleri
