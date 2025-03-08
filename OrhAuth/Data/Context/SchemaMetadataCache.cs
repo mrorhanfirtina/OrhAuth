@@ -15,28 +15,50 @@ namespace OrhAuth.Data.Context
 
         public static void RegisterExtendedType(Type extendedType)
         {
-            if (extendedType == null)
-                return;
-
-            lock (_lockObject)
+            try
             {
-                // Önbelleği temizle
-                if (_cache.ContainsKey(typeof(Models.Entities.User)))
+                if (extendedType == null)
+                    throw new ArgumentNullException(nameof(extendedType), "Genişletilmiş tip null olamaz!");
+
+                lock (_lockObject)
                 {
-                    _cache.Remove(typeof(Models.Entities.User));
-                }
-
-                // Genişletilmiş özellikleri bul ve önbelleğe ekle
-                var properties = extendedType.GetProperties()
-                    .Where(p => p.IsDefined(typeof(ExtendUserAttribute), false))
-                    .Select(p => new PropertyMetadata
+                    // Önbelleği temizle
+                    if (_cache.ContainsKey(typeof(Models.Entities.User)))
                     {
-                        Property = p,
-                        Attribute = (ExtendUserAttribute)p.GetCustomAttribute(typeof(ExtendUserAttribute))
-                    })
-                    .ToList();
+                        _cache.Remove(typeof(Models.Entities.User));
+                    }
 
-                _cache[typeof(Models.Entities.User)] = properties;
+                    // Genişletilmiş özellikleri bul ve önbelleğe ekle
+                    var properties = extendedType.GetProperties()
+                        .Where(p => p.IsDefined(typeof(ExtendUserAttribute), false))
+                        .ToList();
+
+                    if (properties.Count == 0)
+                        throw new InvalidOperationException($"Genişletilmiş tipte ({extendedType.FullName}) ExtendUserAttribute ile işaretlenmiş özellik bulunamadı!");
+
+                    var propertyMetadataList = properties.Select(p =>
+                    {
+                        try
+                        {
+                            return new PropertyMetadata
+                            {
+                                Property = p,
+                                Attribute = (ExtendUserAttribute)p.GetCustomAttribute(typeof(ExtendUserAttribute))
+                            };
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new InvalidOperationException($"{p.Name} özelliği için attribute alınamadı: {ex.Message}", ex);
+                        }
+                    }).ToList();
+
+                    _cache[typeof(Models.Entities.User)] = propertyMetadataList;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"RegisterExtendedType hatası: {ex.Message}");
+                throw; // Hatayı tekrar fırlat
             }
         }
 
@@ -70,7 +92,7 @@ namespace OrhAuth.Data.Context
         }
     }
 
-    // PropertyMetadata sınıfı eğer yoksa ekleyin
+    // PropertyMetadata sınıfı
     public class PropertyMetadata
     {
         public PropertyInfo Property { get; set; }
