@@ -8,12 +8,18 @@ namespace OrhAuth.Configurations
 {
     public static class AuthFrameworkInitializer
     {
-        public static void Initialize(string connectionString, bool createDatabaseIfNotExists = true)
+        public static void Initialize(string connectionString, bool createDatabaseIfNotExists = true, System.Type extendedUserType = null)
         {
+
             if (createDatabaseIfNotExists)
             {
                 using (var context = new AuthDbContext(connectionString))
                 {
+                    if (extendedUserType != null)
+                    {
+                        SchemaMetadataCache.RegisterExtendedType(extendedUserType);
+                    }
+
                     if (context.Database.Exists())
                     {
                         // Database değişikliklerini uygula

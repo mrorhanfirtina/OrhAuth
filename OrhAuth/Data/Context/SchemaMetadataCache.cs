@@ -6,9 +6,6 @@ using System.Linq;
 
 namespace OrhAuth.Data.Context
 {
-    /// <summary>
-    /// Entity tipleri için şema metadata önbelleği
-    /// </summary>
     public static class SchemaMetadataCache
     {
         private static readonly Dictionary<Type, List<PropertyMetadata>> _cache =
@@ -16,27 +13,48 @@ namespace OrhAuth.Data.Context
 
         private static readonly object _lockObject = new object();
 
-        /// <summary> 
-        /// Bir tip için genişletilmiş özellikleri döndürür
-        /// </summary>
+        public static void RegisterExtendedType(Type extendedType)
+        {
+            if (extendedType == null)
+                return;
+
+            lock (_lockObject)
+            {
+                // Önbelleği temizle
+                if (_cache.ContainsKey(typeof(Models.Entities.User)))
+                {
+                    _cache.Remove(typeof(Models.Entities.User));
+                }
+
+                // Genişletilmiş özellikleri bul ve önbelleğe ekle
+                var properties = extendedType.GetProperties()
+                    .Where(p => p.IsDefined(typeof(ExtendUserAttribute), false))
+                    .Select(p => new PropertyMetadata
+                    {
+                        Property = p,
+                        Attribute = (ExtendUserAttribute)p.GetCustomAttribute(typeof(ExtendUserAttribute))
+                    })
+                    .ToList();
+
+                _cache[typeof(Models.Entities.User)] = properties;
+            }
+        }
+
+        // Mevcut GetExtendedProperties metodu aynen kalacak
         public static List<PropertyMetadata> GetExtendedProperties(Type entityType)
         {
-            // Önbellekte varsa doğrudan döndür
             if (_cache.ContainsKey(entityType))
             {
                 return _cache[entityType];
             }
 
-            // Değilse, thread güvenli şekilde oluştur
             lock (_lockObject)
             {
-                // Kilitlendikten sonra tekrar kontrol et (double-check locking)
                 if (_cache.ContainsKey(entityType))
                 {
                     return _cache[entityType];
                 }
 
-                // Genişletilmiş özellikleri bul
                 var properties = entityType.GetProperties()
                     .Where(p => p.IsDefined(typeof(ExtendUserAttribute), false))
                     .Select(p => new PropertyMetadata
@@ -46,27 +64,13 @@ namespace OrhAuth.Data.Context
                     })
                     .ToList();
 
-                // Önbelleğe ekle
                 _cache[entityType] = properties;
                 return properties;
             }
         }
-
-        /// <summary>
-        /// Önbelleği temizler
-        /// </summary>
-        public static void ClearCache()
-        {
-            lock (_lockObject)
-            {
-                _cache.Clear();
-            }
-        }
     }
 
-    /// <summary>
-    /// Genişletilmiş özellik metadata'sı
-    /// </summary>
+    // PropertyMetadata sınıfı eğer yoksa ekleyin
     public class PropertyMetadata
     {
         public PropertyInfo Property { get; set; }

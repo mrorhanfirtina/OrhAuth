@@ -12,5 +12,8 @@
         public bool AddDefaultAdmin { get; set; } = true;
         public string DefaultAdminEmail { get; set; } = "admin@example.com";
         public string DefaultAdminPassword { get; set; } = "Admin123!";
+
+        // Genişletilmiş User tipi için yeni özellik
+        public System.Type ExtendedUserType { get; set; }
     }
 }
