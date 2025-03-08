@@ -1,11 +1,5 @@
 ﻿using OrhAuth.Configurations;
-using OrhAuth.Data.Context;
-using OrhAuth.Data.Repositories.Abstract;
-using OrhAuth.Data.Repositories.Concrete;
-using OrhAuth.Models.Entities;
-using OrhAuth.Security.JWT;
 using OrhAuth.Services;
-using System;
 
 namespace OrhAuth.Extensions
 {
@@ -15,7 +9,11 @@ namespace OrhAuth.Extensions
         public static IAuthService ConfigureOrhAuth(OrhAuthOptions options)
         {
             // Veritabanı başlatma
-            AuthFrameworkInitializer.Initialize(options.ConnectionString, options.CreateDatabaseIfNotExists);
+            AuthFrameworkInitializer.Initialize(
+                options.ConnectionString,
+                options.CreateDatabaseIfNotExists,
+                options.ExtendedUserType  // ExtendedUserType'ı da iletiyoruz
+            );
 
             // Auth servisi oluştur ve döndür
             return AuthFrameworkInitializer.CreateAuthService(options.ConnectionString, options);

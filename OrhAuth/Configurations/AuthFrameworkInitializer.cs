@@ -11,15 +11,16 @@ namespace OrhAuth.Configurations
         public static void Initialize(string connectionString, bool createDatabaseIfNotExists = true, System.Type extendedUserType = null)
         {
 
+            // Önce genişletilmiş tip kaydedilmeli
+            if (extendedUserType != null)
+            {
+                SchemaMetadataCache.RegisterExtendedType(extendedUserType);
+            }
+
             if (createDatabaseIfNotExists)
             {
                 using (var context = new AuthDbContext(connectionString))
                 {
-                    if (extendedUserType != null)
-                    {
-                        SchemaMetadataCache.RegisterExtendedType(extendedUserType);
-                    }
-
                     if (context.Database.Exists())
                     {
                         // Database değişikliklerini uygula
