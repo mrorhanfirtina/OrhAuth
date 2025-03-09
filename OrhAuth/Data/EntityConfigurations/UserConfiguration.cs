@@ -15,6 +15,11 @@ namespace OrhAuth.Data.EntityConfigurations
             Property(u => u.LastName).HasMaxLength(50);
             Property(u => u.Username).HasMaxLength(50);
 
+            // ŞİFRE SIFIRLAMA ALANLARI EKLENMELİ
+            Property(u => u.PasswordResetToken).HasMaxLength(100).IsOptional();
+            Property(u => u.PasswordResetTokenSalt).HasMaxLength(100).IsOptional();
+            Property(u => u.PasswordResetTokenExpiry).IsOptional();
+
             // İlişkiler
             HasMany(u => u.UserOperationClaims)
                 .WithRequired(uoc => uoc.User)

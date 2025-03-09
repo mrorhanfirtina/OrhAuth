@@ -1,4 +1,5 @@
 ﻿using OrhAuth.Models.Entities.Base;
+using System;
 using System.Collections.Generic;
 
 namespace OrhAuth.Models.Entities
@@ -13,6 +14,9 @@ namespace OrhAuth.Models.Entities
         public byte[] PasswordSalt { get; set; }
         public bool IsActive { get; set; }
         public string LocalityId { get; set; }
+        public string PasswordResetToken { get; set; }
+        public string PasswordResetTokenSalt { get; set; }
+        public DateTime? PasswordResetTokenExpiry { get; set; }
 
         public virtual ICollection<UserOperationClaim> UserOperationClaims { get; set; }
         public virtual ICollection<RefreshToken> RefreshTokens { get; set; }

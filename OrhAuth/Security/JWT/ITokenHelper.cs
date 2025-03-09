@@ -8,5 +8,6 @@ namespace OrhAuth.Security.JWT
     {
         AccessToken CreateToken(User user, List<OperationClaim> operationClaims);
         string CreateRefreshToken();
+        bool ValidateToken(string token);
     }
 }

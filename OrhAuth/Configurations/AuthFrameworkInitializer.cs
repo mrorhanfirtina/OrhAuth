@@ -242,6 +242,7 @@ namespace OrhAuth.Configurations
                 userRepository,
                 operationClaimRepository,
                 userOperationClaimRepository,
+                refreshTokenRepository,
                 tokenHelper);
 
             return authService;

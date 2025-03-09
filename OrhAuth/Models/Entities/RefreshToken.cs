@@ -11,6 +11,7 @@ namespace OrhAuth.Models.Entities
         public string CreatedByIp { get; set; }
         public DateTime? Revoked { get; set; }
         public string RevokedByIp { get; set; }
+        public DateTime? RevokedDate { get; set; }
         public string ReplacedByToken { get; set; }
 
         public virtual User User { get; set; }

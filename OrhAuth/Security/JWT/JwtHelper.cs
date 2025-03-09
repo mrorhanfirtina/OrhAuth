@@ -98,5 +98,33 @@ namespace OrhAuth.Security.JWT
 
             return claims;
         }
+
+        // JwtHelper sınıfına eklenecek metod
+        public bool ValidateToken(string token)
+        {
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = SecurityKeyHelper.CreateSecurityKey(_tokenOptions.SecurityKey);
+
+                tokenHandler.ValidateToken(token, new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = key,
+                    ValidateIssuer = true,
+                    ValidIssuer = _tokenOptions.Issuer,
+                    ValidateAudience = true,
+                    ValidAudience = _tokenOptions.Audience,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                }, out SecurityToken validatedToken);
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 }
