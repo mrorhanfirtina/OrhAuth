@@ -71,16 +71,53 @@ namespace OrhAuth.Configurations
                         {
                             var attribute = (ExtendUserAttribute)prop.GetCustomAttribute(typeof(ExtendUserAttribute));
                             string sqlType = GetSqlDataType(prop.PropertyType, attribute);
-                            string nullableSuffix = attribute.IsRequired ? " NOT NULL" : " NULL";
+
+                            // DEFAULT değer kısmını oluştur
+                            string defaultValueClause = "";
+                            if (!string.IsNullOrEmpty(attribute.DefaultValue))
+                            {
+                                if (prop.PropertyType == typeof(string))
+                                    defaultValueClause = $" DEFAULT '{attribute.DefaultValue}'";
+                                else if (prop.PropertyType == typeof(int) || prop.PropertyType == typeof(decimal) ||
+                                        prop.PropertyType == typeof(float) || prop.PropertyType == typeof(double))
+                                    defaultValueClause = $" DEFAULT {attribute.DefaultValue}";
+                                else if (prop.PropertyType == typeof(bool))
+                                    defaultValueClause = $" DEFAULT {(attribute.DefaultValue.ToLower() == "true" ? "1" : "0")}";
+                                else if (prop.PropertyType == typeof(DateTime))
+                                    defaultValueClause = $" DEFAULT '{attribute.DefaultValue}'";
+                                else if (prop.PropertyType == typeof(Guid))
+                                    defaultValueClause = $" DEFAULT '{attribute.DefaultValue}'";
+                            }
+
+                            // NOT NULL kısıtı sadece DEFAULT değer varsa veya NULL izin veriliyorsa eklenebilir
+                            string nullableSuffix = attribute.IsRequired && !string.IsNullOrEmpty(attribute.DefaultValue) ?
+                                                  " NOT NULL" : " NULL";
 
                             // Kolon veritabanında var mı diye kontrol ederek ekle
                             string alterSql = $"IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Users]') AND name = '{prop.Name}') " +
-                                             $"ALTER TABLE [dbo].[Users] ADD [{prop.Name}] {sqlType}{nullableSuffix}";
+                                             $"ALTER TABLE [dbo].[Users] ADD [{prop.Name}] {sqlType}{defaultValueClause}{nullableSuffix}";
 
                             command.CommandText = alterSql;
                             command.ExecuteNonQuery();
 
-                            System.Diagnostics.Debug.WriteLine($"SQL ile eklendi: {prop.Name} (Type: {sqlType}{nullableSuffix})");
+                            System.Diagnostics.Debug.WriteLine($"SQL ile eklendi: {prop.Name} (Type: {sqlType}{defaultValueClause}{nullableSuffix})");
+
+                            // Eğer required alan eklenmiş ve default değeri yoksa, mevcut kayıtları güncelle
+                            if (attribute.IsRequired && string.IsNullOrEmpty(attribute.DefaultValue) &&
+                                (prop.PropertyType == typeof(string) || prop.PropertyType == typeof(int)))
+                            {
+                                string updateValue = prop.PropertyType == typeof(string) ? "''" : "0";
+                                string updateSql = $"UPDATE [dbo].[Users] SET [{prop.Name}] = {updateValue} WHERE [{prop.Name}] IS NULL";
+                                command.CommandText = updateSql;
+                                command.ExecuteNonQuery();
+
+                                // Şimdi NOT NULL olarak değiştir
+                                string alterColumnSql = $"ALTER TABLE [dbo].[Users] ALTER COLUMN [{prop.Name}] {sqlType} NOT NULL";
+                                command.CommandText = alterColumnSql;
+                                command.ExecuteNonQuery();
+
+                                System.Diagnostics.Debug.WriteLine($"SQL ile NOT NULL yapıldı: {prop.Name}");
+                            }
 
                             // Eğer Unique kısıtı varsa index ekle
                             if (attribute.IsUnique)
@@ -102,7 +139,7 @@ namespace OrhAuth.Configurations
             {
                 System.Diagnostics.Debug.WriteLine($"SQL ile kolon eklenirken hata: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Hata detayı: {ex.StackTrace}");
-                // Hata oluşsa bile diğer işlemlere devam etmesi için hatayı yutuyoruz
+                throw; // Hatayı yukarı fırlat ki kullanıcı görebilsin
             }
         }
 
