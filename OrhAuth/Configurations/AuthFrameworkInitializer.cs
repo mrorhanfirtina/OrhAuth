@@ -15,29 +15,28 @@ namespace OrhAuth.Configurations
     {
         public static void Initialize(string connectionString, bool createDatabaseIfNotExists = true, System.Type extendedUserType = null)
         {
-            // Önce tip kaydını yap, sonra database işlemlerini başlat
+            // Önce tip kaydını yap
             if (extendedUserType != null)
             {
                 SchemaMetadataCache.RegisterExtendedType(extendedUserType);
             }
 
-            // Veritabanını tamamen sil
             using (var context = new AuthDbContext(connectionString))
             {
-                if (context.Database.Exists())
+                // Veritabanı yoksa ve oluşturma flag'i true ise oluştur
+                if (!context.Database.Exists() && createDatabaseIfNotExists)
                 {
-                    context.Database.Delete();
+                    context.Database.Create();
+                    SeedInitialData(context);
+
+                    // Genişletilmiş alanları ekle
+                    if (extendedUserType != null)
+                    {
+                        AddExtendedColumnsWithSQL(context, extendedUserType);
+                    }
                 }
-            }
-
-            // Daha sonra oluştur - artık tip kayıtlı olduğundan OnModelCreating doğru çalışacak
-            using (var context = new AuthDbContext(connectionString))
-            {
-                context.Database.Create();
-                SeedInitialData(context);
-
-                // Veritabanı oluşturulduktan sonra genişletilmiş alanları ekle
-                if (extendedUserType != null)
+                // Veritabanı varsa ve genişletilmiş tip tanımlanmışsa, sütunları ekle
+                else if (context.Database.Exists() && extendedUserType != null)
                 {
                     AddExtendedColumnsWithSQL(context, extendedUserType);
                 }
