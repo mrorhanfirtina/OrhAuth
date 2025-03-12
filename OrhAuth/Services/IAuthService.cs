@@ -1,6 +1,8 @@
 ﻿using OrhAuth.Models.Dtos;
 using OrhAuth.Models.Entities;
+using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 
 namespace OrhAuth.Services
 {
@@ -11,6 +13,7 @@ namespace OrhAuth.Services
         User Login(UserForLoginDto userForLoginDto);
         bool UserExists(string email);
         AccessToken CreateAccessToken(User user);
+        AccessToken CreateAccessToken(User user, Dictionary<string, string> customClaims = null);
         List<OperationClaim> GetClaims(User user);
         void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt);
 
@@ -47,5 +50,12 @@ namespace OrhAuth.Services
         User RegisterExtendedUser(UserForRegisterDto baseUser, object extendedProperties);
         bool UpdateExtendedUser(int userId, object extendedProperties);
         dynamic GetExtendedUserInfo(int userId);
+
+        // Yeni metotlar
+        dynamic GetUserDynamicById(int userId);
+        dynamic GetUserDynamicByEmail(string email);
+        dynamic GetUserDynamicByLogin(string login);
+        dynamic GetUserDynamicByFilter(Expression<Func<User, bool>> filter);
+        List<dynamic> GetUsersDynamicByFilter(Expression<Func<User, bool>> filter);
     }
 }

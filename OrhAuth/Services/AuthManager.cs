@@ -1,11 +1,15 @@
-﻿using OrhAuth.Data.Repositories.Abstract;
+﻿using OrhAuth.Data.Context;
+using OrhAuth.Data.Repositories.Abstract;
 using OrhAuth.Models.Dtos;
 using OrhAuth.Models.Entities;
 using OrhAuth.Security.Hashing;
 using OrhAuth.Security.JWT;
 using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
+using System.Dynamic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace OrhAuth.Services
@@ -17,19 +21,21 @@ namespace OrhAuth.Services
         private readonly IEntityRepository<UserOperationClaim> _userOperationClaimRepository;
         private readonly IEntityRepository<RefreshToken> _refreshTokenRepository;
         private readonly ITokenHelper _tokenHelper;
+        private readonly string _connectionString;
 
         public AuthManager(
             IEntityRepository<User> userRepository,
             IEntityRepository<OperationClaim> operationClaimRepository,
             IEntityRepository<UserOperationClaim> userOperationClaimRepository,
             IEntityRepository<RefreshToken> refreshTokenRepository,
-            ITokenHelper tokenHelper)
+            ITokenHelper tokenHelper, string connectionString)
         {
             _userRepository = userRepository;
             _operationClaimRepository = operationClaimRepository;
             _userOperationClaimRepository = userOperationClaimRepository;
             _refreshTokenRepository = refreshTokenRepository;
             _tokenHelper = tokenHelper;
+            _connectionString = connectionString;
         }
 
         #region Mevcut Metodlar
@@ -76,6 +82,36 @@ namespace OrhAuth.Services
             var claims = GetClaims(user);
             var accessToken = _tokenHelper.CreateToken(user, claims);
 
+            var refreshToken = new RefreshToken
+            {
+                UserId = user.Id,
+                Token = accessToken.RefreshToken,
+                Expires = DateTime.Now.AddDays(7),
+                CreatedByIp = "127.0.0.1" // Gerçek projede istemcinin IP'sini almalısınız
+            };
+
+            // Refresh token'ı kaydet
+            _refreshTokenRepository.Add(refreshToken);
+
+            return accessToken;
+        }
+
+        public AccessToken CreateAccessToken(User user, Dictionary<string, string> customClaims = null)
+        {
+            var claims = GetClaims(user);
+
+            // Eğer özel claim'ler varsa, bunları kullanarak token oluştur
+            AccessToken accessToken;
+            if (customClaims != null && customClaims.Count > 0)
+            {
+                accessToken = _tokenHelper.CreateToken(user, claims, customClaims);
+            }
+            else
+            {
+                accessToken = _tokenHelper.CreateToken(user, claims);
+            }
+
+            // Refresh token işlemleri...
             var refreshToken = new RefreshToken
             {
                 UserId = user.Id,
@@ -616,6 +652,122 @@ namespace OrhAuth.Services
 
             // Genişletilmiş tip değilse, standart User nesnesini döndür
             return user;
+        }
+
+        #endregion
+
+        #region Dinamik Kullanıcı Sorgulama Metotları
+
+        public dynamic GetUserDynamicById(int userId)
+        {
+            return GetUserDynamicByFilter(u => u.Id == userId);
+        }
+
+        public dynamic GetUserDynamicByEmail(string email)
+        {
+            return GetUserDynamicByFilter(u => u.Email == email);
+        }
+
+        public dynamic GetUserDynamicByLogin(string login)
+        {
+            // Bu metot, ExtendedUser'daki LVUserLogin alanına göre sorgu yapar
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                using (var command = new SqlCommand("SELECT * FROM Users WHERE LVUserLogin = @Login", connection))
+                {
+                    command.Parameters.AddWithValue("@Login", login);
+
+                    return ReadSingleUserDynamic(command);
+                }
+            }
+        }
+
+        public dynamic GetUserDynamicByFilter(Expression<Func<User, bool>> filter)
+        {
+            // Önce LINQ ile User nesnesini bul
+            using (var context = new AuthDbContext(_connectionString))
+            {
+                var user = context.Users.AsNoTracking().FirstOrDefault(filter);
+
+                if (user == null)
+                    return null;
+
+                // Bulunan kullanıcının ID'sine göre tüm alanları SQL ile çek
+                return GetUserDynamicWithAllFieldsById(user.Id);
+            }
+        }
+
+        public List<dynamic> GetUsersDynamicByFilter(Expression<Func<User, bool>> filter)
+        {
+            // Önce LINQ ile User nesnelerini bul
+            using (var context = new AuthDbContext(_connectionString))
+            {
+                var users = context.Users.AsNoTracking().Where(filter).ToList();
+
+                if (users == null || users.Count == 0)
+                    return new List<dynamic>();
+
+                // Bulunan kullanıcıların ID'lerine göre tüm alanları SQL ile çek
+                var result = new List<dynamic>();
+                foreach (var user in users)
+                {
+                    var dynamicUser = GetUserDynamicWithAllFieldsById(user.Id);
+                    if (dynamicUser != null)
+                    {
+                        result.Add(dynamicUser);
+                    }
+                }
+
+                return result;
+            }
+        }
+
+        private dynamic GetUserDynamicWithAllFieldsById(int userId)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                using (var command = new SqlCommand("SELECT * FROM Users WHERE Id = @UserId", connection))
+                {
+                    command.Parameters.AddWithValue("@UserId", userId);
+
+                    return ReadSingleUserDynamic(command);
+                }
+            }
+        }
+
+        private dynamic ReadSingleUserDynamic(SqlCommand command)
+        {
+            using (var reader = command.ExecuteReader())
+            {
+                if (reader.Read())
+                {
+                    dynamic dynamicUser = new ExpandoObject();
+                    var expandoDict = (IDictionary<string, object>)dynamicUser;
+
+                    // Tüm sütunları oku
+                    for (int i = 0; i < reader.FieldCount; i++)
+                    {
+                        string columnName = reader.GetName(i);
+                        object value = reader.IsDBNull(i) ? null : reader.GetValue(i);
+
+                        // byte[] tipindeki değerleri Base64 string'e dönüştür
+                        if (value is byte[] byteArray)
+                        {
+                            value = Convert.ToBase64String(byteArray);
+                        }
+
+                        expandoDict[columnName] = value;
+                    }
+
+                    return dynamicUser;
+                }
+
+                return null;
+            }
         }
 
         #endregion

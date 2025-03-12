@@ -93,6 +93,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Attributes\AddToClaimAttribute.cs" />
     <Compile Include="Attributes\ExtendUserAttribute.cs" />
     <Compile Include="Configurations\AuthFrameworkInitializer.cs" />
     <Compile Include="Configurations\OrhAuthOptions.cs" />

@@ -1,0 +1,484 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\EntityFramework.6.4.4\build\EntityFramework.props" Condition="Exists('..\packages\EntityFramework.6.4.4\build\EntityFramework.props')" />
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{73BE2E48-261C-4AA4-92AC-EECF0BA53AAD}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>LVCore.LVApp.DataAccessService</RootNamespace>
+    <AssemblyName>LVCore.LVApp.DataAccessService</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+    <LangVersion>8.0</LangVersion>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Dapper, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Dapper.2.1.66\lib\net461\Dapper.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.4.4\lib\net45\EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.4.4\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=9.0.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.9.0.1\lib\net462\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.IdentityModel.JsonWebTokens, Version=5.3.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.IdentityModel.JsonWebTokens.5.3.0\lib\net461\Microsoft.IdentityModel.JsonWebTokens.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.IdentityModel.Logging, Version=5.3.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.IdentityModel.Logging.5.3.0\lib\net461\Microsoft.IdentityModel.Logging.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.IdentityModel.Tokens, Version=5.3.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.IdentityModel.Tokens.5.3.0\lib\net461\Microsoft.IdentityModel.Tokens.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Owin, Version=4.2.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Owin.4.2.2\lib\net45\Microsoft.Owin.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Owin.Security, Version=4.2.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Owin.Security.4.2.2\lib\net45\Microsoft.Owin.Security.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Owin.Security.Jwt, Version=4.2.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Owin.Security.Jwt.4.2.2\lib\net45\Microsoft.Owin.Security.Jwt.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Owin.Security.OAuth, Version=4.2.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Owin.Security.OAuth.4.2.2\lib\net45\Microsoft.Owin.Security.OAuth.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="Owin, Version=1.0.0.0, Culture=neutral, PublicKeyToken=f0ebd12fd5e55cc5, processorArchitecture=MSIL">
+      <HintPath>..\packages\Owin.1.0\lib\net40\Owin.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.IdentityModel.Tokens.Jwt, Version=5.3.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.IdentityModel.Tokens.Jwt.5.3.0\lib\net461\System.IdentityModel.Tokens.Jwt.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.4.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.4.5.3\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Extensions\SequenceManager.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Repositories\Abstract\IAttributeLabelRepository.cs" />
+    <Compile Include="Repositories\Abstract\IAttributeListValueRepository.cs" />
+    <Compile Include="Repositories\Abstract\IBarcodeLayoutItemRepository.cs" />
+    <Compile Include="Repositories\Abstract\IBarcodeLayoutRepository.cs" />
+    <Compile Include="Repositories\Abstract\ICompanyRepository.cs" />
+    <Compile Include="Repositories\Abstract\ICountryRepository.cs" />
+    <Compile Include="Repositories\Abstract\ICustomerAttributesRepository.cs" />
+    <Compile Include="Repositories\Abstract\ICustomerAttributeValuesRepository.cs" />
+    <Compile Include="Repositories\Abstract\ICustomerDeliveryRepository.cs" />
+    <Compile Include="Repositories\Abstract\ICustomerRepository.cs" />
+    <Compile Include="Repositories\Abstract\ICustomLabelRepository.cs" />
+    <Compile Include="Repositories\Abstract\IDashboardLangRepository.cs" />
+    <Compile Include="Repositories\Abstract\IDashboardRepository.cs" />
+    <Compile Include="Repositories\Abstract\IDashboardVisualizationRepository.cs" />
+    <Compile Include="Repositories\Abstract\IDatasourceFieldRepository.cs" />
+    <Compile Include="Repositories\Abstract\IDatasourceFilterRepository.cs" />
+    <Compile Include="Repositories\Abstract\IDatasourceRepository.cs" />
+    <Compile Include="Repositories\Abstract\IDepOrderMasterAttrRepository.cs" />
+    <Compile Include="Repositories\Abstract\IDepOrderOrdAttrRepository.cs" />
+    <Compile Include="Repositories\Abstract\IDepositorAttributesRepository.cs" />
+    <Compile Include="Repositories\Abstract\IDepositorAttributeValuesRepository.cs" />
+    <Compile Include="Repositories\Abstract\IDepositorBarcodeLayoutRepository.cs" />
+    <Compile Include="Repositories\Abstract\IDepositorOrderAttributeRepository.cs" />
+    <Compile Include="Repositories\Abstract\IDepositorParameterLSRepository.cs" />
+    <Compile Include="Repositories\Abstract\IDepositorReceiptAttributeRepository.cs" />
+    <Compile Include="Repositories\Abstract\IDepositorRepository.cs" />
+    <Compile Include="Repositories\Abstract\IDepositorStockAttributeRepository.cs" />
+    <Compile Include="Repositories\Abstract\IDepReceiptMasterAttrRepository.cs" />
+    <Compile Include="Repositories\Abstract\IDepReceiptRctAttrRepository.cs" />
+    <Compile Include="Repositories\Abstract\IDimensionGroupRepository.cs" />
+    <Compile Include="Repositories\Abstract\IEmployeeGroupRepository.cs" />
+    <Compile Include="Repositories\Abstract\IEmployeeRepository.cs" />
+    <Compile Include="Repositories\Abstract\IEmployeesByGroupRepository.cs" />
+    <Compile Include="Repositories\Abstract\IFormAttributeFormRepository.cs" />
+    <Compile Include="Repositories\Abstract\IFormAttributesRepository.cs" />
+    <Compile Include="Repositories\Abstract\IFormAttributesValuesRepository.cs" />
+    <Compile Include="Repositories\Abstract\IHardAllocAlgorithmRepository.cs" />
+    <Compile Include="Repositories\Abstract\IHostRepository.cs" />
+    <Compile Include="Repositories\Abstract\IImpLogFileRepository.cs" />
+    <Compile Include="Repositories\Abstract\IImpLogRecordRepository.cs" />
+    <Compile Include="Repositories\Abstract\IImportExtItemRepository.cs" />
+    <Compile Include="Repositories\Abstract\IImportFileRecordRepository.cs" />
+    <Compile Include="Repositories\Abstract\IImportFileRepository.cs" />
+    <Compile Include="Repositories\Abstract\IImportIntItemRepository.cs" />
+    <Compile Include="Repositories\Abstract\IImportRecordRepository.cs" />
+    <Compile Include="Repositories\Abstract\IItemPackTypeHierarchyRepository.cs" />
+    <Compile Include="Repositories\Abstract\IItemPackTypeRepository.cs" />
+    <Compile Include="Repositories\Abstract\IItemUnitConversionRepository.cs" />
+    <Compile Include="Repositories\Abstract\IItemUnitRepository.cs" />
+    <Compile Include="Repositories\Abstract\ILocationRepository.cs" />
+    <Compile Include="Repositories\Abstract\ILocBuildingsRepository.cs" />
+    <Compile Include="Repositories\Abstract\ILocPickingTypeRepository.cs" />
+    <Compile Include="Repositories\Abstract\ILocPrinterRepository.cs" />
+    <Compile Include="Repositories\Abstract\ILocPutSuggestionRepository.cs" />
+    <Compile Include="Repositories\Abstract\ILocTransactionTypeRepository.cs" />
+    <Compile Include="Repositories\Abstract\ILocZoneRepository.cs" />
+    <Compile Include="Repositories\Abstract\ILogisticSiteRepository.cs" />
+    <Compile Include="Repositories\Abstract\ILogisticUnitRepository.cs" />
+    <Compile Include="Repositories\Abstract\ILogRepository.cs" />
+    <Compile Include="Repositories\Abstract\ILogStockAttrValueRepository.cs" />
+    <Compile Include="Repositories\Abstract\ILogStockContainerRepository.cs" />
+    <Compile Include="Repositories\Abstract\ILogStockPackTypeRepository.cs" />
+    <Compile Include="Repositories\Abstract\ILogStockRepository.cs" />
+    <Compile Include="Repositories\Abstract\ILSParametersRepository.cs" />
+    <Compile Include="Repositories\Abstract\ILSUserAccessRepository.cs" />
+    <Compile Include="Repositories\Abstract\IMachineModelRepository.cs" />
+    <Compile Include="Repositories\Abstract\IMachineRepository.cs" />
+    <Compile Include="Repositories\Abstract\IMachineTypeRepository.cs" />
+    <Compile Include="Repositories\Abstract\IMeasurementDepLSRepository.cs" />
+    <Compile Include="Repositories\Abstract\IMeasurementLangRepository.cs" />
+    <Compile Include="Repositories\Abstract\IMissingStockAttrValueRepository.cs" />
+    <Compile Include="Repositories\Abstract\IMissingStockLogRepository.cs" />
+    <Compile Include="Repositories\Abstract\IMSRByDimElementsFieldsRepository.cs" />
+    <Compile Include="Repositories\Abstract\IMSRByDimElementsRepository.cs" />
+    <Compile Include="Repositories\Abstract\IMSRByDimensionLangRepository.cs" />
+    <Compile Include="Repositories\Abstract\IMSRByDimensionRepository.cs" />
+    <Compile Include="Repositories\Abstract\INoStockActionRepository.cs" />
+    <Compile Include="Repositories\Abstract\IOperationsByGroupRepository.cs" />
+    <Compile Include="Repositories\Abstract\IOrderAttributeListRepository.cs" />
+    <Compile Include="Repositories\Abstract\IOrderAttributesRepository.cs" />
+    <Compile Include="Repositories\Abstract\IOrderAttributesValuesRepository.cs" />
+    <Compile Include="Repositories\Abstract\IOrderCustomerRepository.cs" />
+    <Compile Include="Repositories\Abstract\IOrderDeliveryRepository.cs" />
+    <Compile Include="Repositories\Abstract\IOrderItemAttrValueRepository.cs" />
+    <Compile Include="Repositories\Abstract\IOrderItemOrdAttrValueRepository.cs" />
+    <Compile Include="Repositories\Abstract\IOrderItemRepository.cs" />
+    <Compile Include="Repositories\Abstract\IOrderReceiverRepository.cs" />
+    <Compile Include="Repositories\Abstract\IOrderRepository.cs" />
+    <Compile Include="Repositories\Abstract\IOrderShipItemAnalysisRepository.cs" />
+    <Compile Include="Repositories\Abstract\IOrderShipItemRepository.cs" />
+    <Compile Include="Repositories\Abstract\IOrderShipItemShipStockRepository.cs" />
+    <Compile Include="Repositories\Abstract\IOrderShipItemStockRepository.cs" />
+    <Compile Include="Repositories\Abstract\IOrderShipmentRepository.cs" />
+    <Compile Include="Repositories\Abstract\IOrderTypeRepository.cs" />
+    <Compile Include="Repositories\Abstract\IOrderTypeSCRuleRepository.cs" />
+    <Compile Include="Repositories\Abstract\IPersonRepository.cs" />
+    <Compile Include="Repositories\Abstract\IPriceListDepositorLSRepository.cs" />
+    <Compile Include="Repositories\Abstract\IPriceListDetailRepository.cs" />
+    <Compile Include="Repositories\Abstract\IPriceListLangRepository.cs" />
+    <Compile Include="Repositories\Abstract\IPriceListObjectsRepository.cs" />
+    <Compile Include="Repositories\Abstract\IPriceListRepository.cs" />
+    <Compile Include="Repositories\Abstract\IPrinterRepository.cs" />
+    <Compile Include="Repositories\Abstract\IPrinterTypeRepository.cs" />
+    <Compile Include="Repositories\Abstract\IPrintLabelLogRepository.cs" />
+    <Compile Include="Repositories\Abstract\IPrintLabelRepository.cs" />
+    <Compile Include="Repositories\Abstract\IProductAttributesRepository.cs" />
+    <Compile Include="Repositories\Abstract\IProductAttributesValuesRepository.cs" />
+    <Compile Include="Repositories\Abstract\IProductBarcodeRepository.cs" />
+    <Compile Include="Repositories\Abstract\IProductDepositorRepository.cs" />
+    <Compile Include="Repositories\Abstract\IProductLangRepository.cs" />
+    <Compile Include="Repositories\Abstract\IProductLSRepository.cs" />
+    <Compile Include="Repositories\Abstract\IProductRepository.cs" />
+    <Compile Include="Repositories\Abstract\IProductStockAttributesRepository.cs" />
+    <Compile Include="Repositories\Abstract\IPROParametersRepository.cs" />
+    <Compile Include="Repositories\Abstract\IPROReworkReasonRepository.cs" />
+    <Compile Include="Repositories\Abstract\IReceiptAttributesRepository.cs" />
+    <Compile Include="Repositories\Abstract\IReceiptAttributesValuesRepository.cs" />
+    <Compile Include="Repositories\Abstract\IReceiptEmployeeRepository.cs" />
+    <Compile Include="Repositories\Abstract\IReceiptExpectLocationRepository.cs" />
+    <Compile Include="Repositories\Abstract\IReceiptItemAttrValueRepository.cs" />
+    <Compile Include="Repositories\Abstract\IReceiptItemRctAttrValueRepository.cs" />
+    <Compile Include="Repositories\Abstract\IReceiptItemRepository.cs" />
+    <Compile Include="Repositories\Abstract\IReceiptLocationRepository.cs" />
+    <Compile Include="Repositories\Abstract\IReceiptRepository.cs" />
+    <Compile Include="Repositories\Abstract\IReceiptStatisticsRepository.cs" />
+    <Compile Include="Repositories\Abstract\IReceiptTypeRepository.cs" />
+    <Compile Include="Repositories\Abstract\IRsrvRsnForbidTransTypeRepository.cs" />
+    <Compile Include="Repositories\Abstract\IScheduledJobDetailRepository.cs" />
+    <Compile Include="Repositories\Abstract\IScheduledJobRepository.cs" />
+    <Compile Include="Repositories\Abstract\ISCRuleRepository.cs" />
+    <Compile Include="Repositories\Abstract\ISelectFiltersRepository.cs" />
+    <Compile Include="Repositories\Abstract\ISequencesLSRepository.cs" />
+    <Compile Include="Repositories\Abstract\ISessionRepository.cs" />
+    <Compile Include="Repositories\Abstract\IShipContainerRepository.cs" />
+    <Compile Include="Repositories\Abstract\IShipStockAttrValuesRepository.cs" />
+    <Compile Include="Repositories\Abstract\IShipStockPackTypeRepository.cs" />
+    <Compile Include="Repositories\Abstract\IShipStockRepository.cs" />
+    <Compile Include="Repositories\Abstract\IStandardPackTypeRepository.cs" />
+    <Compile Include="Repositories\Abstract\IStockAttributesListRepository.cs" />
+    <Compile Include="Repositories\Abstract\IStockAttributesRepository.cs" />
+    <Compile Include="Repositories\Abstract\IStockAttributesValuesRepository.cs" />
+    <Compile Include="Repositories\Abstract\IStockContainerRepository.cs" />
+    <Compile Include="Repositories\Abstract\IStockPackTypeRepository.cs" />
+    <Compile Include="Repositories\Abstract\IStockRepository.cs" />
+    <Compile Include="Repositories\Abstract\IStockReserveReasonRepository.cs" />
+    <Compile Include="Repositories\Abstract\IStorageSystemsRepository.cs" />
+    <Compile Include="Repositories\Abstract\ISTOResourceDataByLURepository.cs" />
+    <Compile Include="Repositories\Abstract\ISupplierAttributesRepository.cs" />
+    <Compile Include="Repositories\Abstract\ISupplierAttributesValuesRepository.cs" />
+    <Compile Include="Repositories\Abstract\ISupplierDepositorRepository.cs" />
+    <Compile Include="Repositories\Abstract\ISupplierRepository.cs" />
+    <Compile Include="Repositories\Abstract\ISYSTriggerOriginRepository.cs" />
+    <Compile Include="Repositories\Abstract\ITaskAttributesValuesExRepository.cs" />
+    <Compile Include="Repositories\Abstract\ITaskAttributesValuesRepository.cs" />
+    <Compile Include="Repositories\Abstract\ITaskListRepository.cs" />
+    <Compile Include="Repositories\Abstract\ITaskListSequenceRepository.cs" />
+    <Compile Include="Repositories\Abstract\ITaskPackTypeRepository.cs" />
+    <Compile Include="Repositories\Abstract\ITaskPriorityLangRepository.cs" />
+    <Compile Include="Repositories\Abstract\ITaskPriorityRepository.cs" />
+    <Compile Include="Repositories\Abstract\ITaskRepository.cs" />
+    <Compile Include="Repositories\Abstract\ITaskStockRepository.cs" />
+    <Compile Include="Repositories\Abstract\ITransactionTypeScriptRepository.cs" />
+    <Compile Include="Repositories\Abstract\IUnitLangRepository.cs" />
+    <Compile Include="Repositories\Abstract\IUnitRepository.cs" />
+    <Compile Include="Repositories\Abstract\IUnsuitabilityReasonRepository.cs" />
+    <Compile Include="Repositories\Abstract\IUserCategoryFormRightsRepository.cs" />
+    <Compile Include="Repositories\Abstract\IUserCategoryRepository.cs" />
+    <Compile Include="Repositories\Abstract\IUserDepositorRepository.cs" />
+    <Compile Include="Repositories\Abstract\IUserListFormatRepository.cs" />
+    <Compile Include="Repositories\Abstract\IUserRolesRepository.cs" />
+    <Compile Include="Repositories\Abstract\IUsersRepository.cs" />
+    <Compile Include="Repositories\Abstract\IVisualCategoryRepository.cs" />
+    <Compile Include="Repositories\Abstract\IVisualizationLangRepository.cs" />
+    <Compile Include="Repositories\Abstract\IVisualizationRepository.cs" />
+    <Compile Include="Repositories\Abstract\IZoneRepository.cs" />
+    <Compile Include="Repositories\Base\BaseRepository.cs" />
+    <Compile Include="Repositories\Base\IBaseRepository.cs" />
+    <Compile Include="Repositories\Concrete\AttributeLabelRepository.cs" />
+    <Compile Include="Repositories\Concrete\AttributeListValueRepository.cs" />
+    <Compile Include="Repositories\Concrete\BarcodeLayoutItemRepository.cs" />
+    <Compile Include="Repositories\Concrete\BarcodeLayoutRepository.cs" />
+    <Compile Include="Repositories\Concrete\CompanyRepository.cs" />
+    <Compile Include="Repositories\Concrete\CountryRepository.cs" />
+    <Compile Include="Repositories\Concrete\CustomerAttributesRepository.cs" />
+    <Compile Include="Repositories\Concrete\CustomerAttributeValuesRepository.cs" />
+    <Compile Include="Repositories\Concrete\CustomerDeliveryRepository.cs" />
+    <Compile Include="Repositories\Concrete\CustomerRepository.cs" />
+    <Compile Include="Repositories\Concrete\CustomLabelRepository.cs" />
+    <Compile Include="Repositories\Concrete\DashboardLangRepository.cs" />
+    <Compile Include="Repositories\Concrete\DashboardRepository.cs" />
+    <Compile Include="Repositories\Concrete\DashboardVisualizationRepository.cs" />
+    <Compile Include="Repositories\Concrete\DatasourceFieldRepository.cs" />
+    <Compile Include="Repositories\Concrete\DatasourceFilterRepository.cs" />
+    <Compile Include="Repositories\Concrete\DatasourceRepository.cs" />
+    <Compile Include="Repositories\Concrete\DepOrderMasterAttrRepository.cs" />
+    <Compile Include="Repositories\Concrete\DepOrderOrdAttrRepository.cs" />
+    <Compile Include="Repositories\Concrete\DepositorAttributesRepository.cs" />
+    <Compile Include="Repositories\Concrete\DepositorAttributeValuesRepository.cs" />
+    <Compile Include="Repositories\Concrete\DepositorBarcodeLayoutRepository.cs" />
+    <Compile Include="Repositories\Concrete\DepositorOrderAttributeRepository.cs" />
+    <Compile Include="Repositories\Concrete\DepositorParameterLSRepository.cs" />
+    <Compile Include="Repositories\Concrete\DepositorReceiptAttributeRepository.cs" />
+    <Compile Include="Repositories\Concrete\DepositorRepository.cs" />
+    <Compile Include="Repositories\Concrete\DepositorStockAttributeRepository.cs" />
+    <Compile Include="Repositories\Concrete\DepReceiptMasterAttrRepository.cs" />
+    <Compile Include="Repositories\Concrete\DepReceiptRctAttrRepository.cs" />
+    <Compile Include="Repositories\Concrete\DimensionGroupRepository.cs" />
+    <Compile Include="Repositories\Concrete\EmployeeGroupRepository.cs" />
+    <Compile Include="Repositories\Concrete\EmployeeRepository.cs" />
+    <Compile Include="Repositories\Concrete\EmployeesByGroupRepository.cs" />
+    <Compile Include="Repositories\Concrete\FormAttributeFormRepository.cs" />
+    <Compile Include="Repositories\Concrete\FormAttributesRepository.cs" />
+    <Compile Include="Repositories\Concrete\FormAttributesValuesRepository.cs" />
+    <Compile Include="Repositories\Concrete\HardAllocAlgorithmRepository.cs" />
+    <Compile Include="Repositories\Concrete\HostRepository.cs" />
+    <Compile Include="Repositories\Concrete\ImpLogFileRepository.cs" />
+    <Compile Include="Repositories\Concrete\ImpLogRecordRepository.cs" />
+    <Compile Include="Repositories\Concrete\ImportExtItemRepository.cs" />
+    <Compile Include="Repositories\Concrete\ImportFileRecordRepository.cs" />
+    <Compile Include="Repositories\Concrete\ImportFileRepository.cs" />
+    <Compile Include="Repositories\Concrete\ImportIntItemRepository.cs" />
+    <Compile Include="Repositories\Concrete\ImportRecordRepository.cs" />
+    <Compile Include="Repositories\Concrete\ItemPackTypeHierarchyRepository.cs" />
+    <Compile Include="Repositories\Concrete\ItemPackTypeRepository.cs" />
+    <Compile Include="Repositories\Concrete\ItemUnitConversionRepository.cs" />
+    <Compile Include="Repositories\Concrete\ItemUnitRepository.cs" />
+    <Compile Include="Repositories\Concrete\LocationRepository.cs" />
+    <Compile Include="Repositories\Concrete\LocBuildingsRepository.cs" />
+    <Compile Include="Repositories\Concrete\LocPickingTypeRepository.cs" />
+    <Compile Include="Repositories\Concrete\LocPrinterRepository.cs" />
+    <Compile Include="Repositories\Concrete\LocPutSuggestionRepository.cs" />
+    <Compile Include="Repositories\Concrete\LocTransactionTypeRepository.cs" />
+    <Compile Include="Repositories\Concrete\LocZoneRepository.cs" />
+    <Compile Include="Repositories\Concrete\LogisticSiteRepository.cs" />
+    <Compile Include="Repositories\Concrete\LogisticUnitRepository.cs" />
+    <Compile Include="Repositories\Concrete\LogRepository.cs" />
+    <Compile Include="Repositories\Concrete\LogStockAttrValueRepository.cs" />
+    <Compile Include="Repositories\Concrete\LogStockContainerRepository.cs" />
+    <Compile Include="Repositories\Concrete\LogStockPackTypeRepository.cs" />
+    <Compile Include="Repositories\Concrete\LogStockRepository.cs" />
+    <Compile Include="Repositories\Concrete\LSParametersRepository.cs" />
+    <Compile Include="Repositories\Concrete\LSUserAccessRepository.cs" />
+    <Compile Include="Repositories\Concrete\MachineModelRepository.cs" />
+    <Compile Include="Repositories\Concrete\MachineRepository.cs" />
+    <Compile Include="Repositories\Concrete\MachineTypeRepository.cs" />
+    <Compile Include="Repositories\Concrete\MeasurementDepLSRepository.cs" />
+    <Compile Include="Repositories\Concrete\MeasurementLangRepository.cs" />
+    <Compile Include="Repositories\Concrete\MissingStockAttrValueRepository.cs" />
+    <Compile Include="Repositories\Concrete\MissingStockLogRepository.cs" />
+    <Compile Include="Repositories\Concrete\MSRByDimElementsFieldsRepository.cs" />
+    <Compile Include="Repositories\Concrete\MSRByDimElementsRepository.cs" />
+    <Compile Include="Repositories\Concrete\MSRByDimensionLangRepository.cs" />
+    <Compile Include="Repositories\Concrete\MSRByDimensionRepository.cs" />
+    <Compile Include="Repositories\Concrete\NoStockActionRepository.cs" />
+    <Compile Include="Repositories\Concrete\OperationsByGroupRepository.cs" />
+    <Compile Include="Repositories\Concrete\OrderAttributeListRepository.cs" />
+    <Compile Include="Repositories\Concrete\OrderAttributesRepository.cs" />
+    <Compile Include="Repositories\Concrete\OrderAttributesValuesRepository.cs" />
+    <Compile Include="Repositories\Concrete\OrderCustomerRepository.cs" />
+    <Compile Include="Repositories\Concrete\OrderDeliveryRepository.cs" />
+    <Compile Include="Repositories\Concrete\OrderItemAttrValueRepository.cs" />
+    <Compile Include="Repositories\Concrete\OrderItemOrdAttrValueRepository.cs" />
+    <Compile Include="Repositories\Concrete\OrderItemRepository.cs" />
+    <Compile Include="Repositories\Concrete\OrderReceiverRepository.cs" />
+    <Compile Include="Repositories\Concrete\OrderRepository.cs" />
+    <Compile Include="Repositories\Concrete\OrderShipItemAnalysisRepository.cs" />
+    <Compile Include="Repositories\Concrete\OrderShipItemRepository.cs" />
+    <Compile Include="Repositories\Concrete\OrderShipItemShipStockRepository.cs" />
+    <Compile Include="Repositories\Concrete\OrderShipItemStockRepository.cs" />
+    <Compile Include="Repositories\Concrete\OrderShipmentRepository.cs" />
+    <Compile Include="Repositories\Concrete\OrderTypeRepository.cs" />
+    <Compile Include="Repositories\Concrete\OrderTypeSCRuleRepository.cs" />
+    <Compile Include="Repositories\Concrete\PersonRepository.cs" />
+    <Compile Include="Repositories\Concrete\PriceListDepositorLSRepository.cs" />
+    <Compile Include="Repositories\Concrete\PriceListDetailRepository.cs" />
+    <Compile Include="Repositories\Concrete\PriceListLangRepository.cs" />
+    <Compile Include="Repositories\Concrete\PriceListObjectsRepository.cs" />
+    <Compile Include="Repositories\Concrete\PriceListRepository.cs" />
+    <Compile Include="Repositories\Concrete\PrinterRepository.cs" />
+    <Compile Include="Repositories\Concrete\PrinterTypeRepository.cs" />
+    <Compile Include="Repositories\Concrete\PrintLabelLogRepository.cs" />
+    <Compile Include="Repositories\Concrete\PrintLabelRepository.cs" />
+    <Compile Include="Repositories\Concrete\ProductAttributesRepository.cs" />
+    <Compile Include="Repositories\Concrete\ProductAttributesValuesRepository.cs" />
+    <Compile Include="Repositories\Concrete\ProductBarcodeRepository.cs" />
+    <Compile Include="Repositories\Concrete\ProductDepositorRepository.cs" />
+    <Compile Include="Repositories\Concrete\ProductLangRepository.cs" />
+    <Compile Include="Repositories\Concrete\ProductLSRepository.cs" />
+    <Compile Include="Repositories\Concrete\ProductRepository.cs" />
+    <Compile Include="Repositories\Concrete\ProductStockAttributesRepository.cs" />
+    <Compile Include="Repositories\Concrete\PROParametersRepository.cs" />
+    <Compile Include="Repositories\Concrete\PROReworkReasonRepository.cs" />
+    <Compile Include="Repositories\Concrete\ReceiptAttributesRepository.cs" />
+    <Compile Include="Repositories\Concrete\ReceiptAttributesValuesRepository.cs" />
+    <Compile Include="Repositories\Concrete\ReceiptEmployeeRepository.cs" />
+    <Compile Include="Repositories\Concrete\ReceiptExpectLocationRepository.cs" />
+    <Compile Include="Repositories\Concrete\ReceiptItemAttrValueRepository.cs" />
+    <Compile Include="Repositories\Concrete\ReceiptItemRctAttrValueRepository.cs" />
+    <Compile Include="Repositories\Concrete\ReceiptItemRepository.cs" />
+    <Compile Include="Repositories\Concrete\ReceiptLocationRepository.cs" />
+    <Compile Include="Repositories\Concrete\ReceiptRepository.cs" />
+    <Compile Include="Repositories\Concrete\ReceiptStatisticsRepository.cs" />
+    <Compile Include="Repositories\Concrete\ReceiptTypeRepository.cs" />
+    <Compile Include="Repositories\Concrete\RsrvRsnForbidTransTypeRepository.cs" />
+    <Compile Include="Repositories\Concrete\ScheduledJobDetailRepository.cs" />
+    <Compile Include="Repositories\Concrete\ScheduledJobRepository.cs" />
+    <Compile Include="Repositories\Concrete\SCRuleRepository.cs" />
+    <Compile Include="Repositories\Concrete\SelectFiltersRepository.cs" />
+    <Compile Include="Repositories\Concrete\SequencesLSRepository.cs" />
+    <Compile Include="Repositories\Concrete\SessionRepository.cs" />
+    <Compile Include="Repositories\Concrete\ShipContainerRepository.cs" />
+    <Compile Include="Repositories\Concrete\ShipStockAttrValuesRepository.cs" />
+    <Compile Include="Repositories\Concrete\ShipStockPackTypeRepository.cs" />
+    <Compile Include="Repositories\Concrete\ShipStockRepository.cs" />
+    <Compile Include="Repositories\Concrete\StandardPackTypeRepository.cs" />
+    <Compile Include="Repositories\Concrete\StockAttributesListRepository.cs" />
+    <Compile Include="Repositories\Concrete\StockAttributesRepository.cs" />
+    <Compile Include="Repositories\Concrete\StockAttributesValuesRepository.cs" />
+    <Compile Include="Repositories\Concrete\StockContainerRepository.cs" />
+    <Compile Include="Repositories\Concrete\StockPackTypeRepository.cs" />
+    <Compile Include="Repositories\Concrete\StockRepository.cs" />
+    <Compile Include="Repositories\Concrete\StockReserveReasonRepository.cs" />
+    <Compile Include="Repositories\Concrete\StorageSystemsRepository.cs" />
+    <Compile Include="Repositories\Concrete\STOResourceDataByLURepository.cs" />
+    <Compile Include="Repositories\Concrete\SupplierAttributesRepository.cs" />
+    <Compile Include="Repositories\Concrete\SupplierAttributesValuesRepository.cs" />
+    <Compile Include="Repositories\Concrete\SupplierDepositorRepository.cs" />
+    <Compile Include="Repositories\Concrete\SupplierRepository.cs" />
+    <Compile Include="Repositories\Concrete\SYSTriggerOriginRepository.cs" />
+    <Compile Include="Repositories\Concrete\TaskAttributesValuesExRepository.cs" />
+    <Compile Include="Repositories\Concrete\TaskAttributesValuesRepository.cs" />
+    <Compile Include="Repositories\Concrete\TaskListRepository.cs" />
+    <Compile Include="Repositories\Concrete\TaskListSequenceRepository.cs" />
+    <Compile Include="Repositories\Concrete\TaskPackTypeRepository.cs" />
+    <Compile Include="Repositories\Concrete\TaskPriorityLangRepository.cs" />
+    <Compile Include="Repositories\Concrete\TaskPriorityRepository.cs" />
+    <Compile Include="Repositories\Concrete\TaskRepository.cs" />
+    <Compile Include="Repositories\Concrete\TaskStockRepository.cs" />
+    <Compile Include="Repositories\Concrete\TransactionTypeScriptRepository.cs" />
+    <Compile Include="Repositories\Concrete\UnitLangRepository.cs" />
+    <Compile Include="Repositories\Concrete\UnitRepository.cs" />
+    <Compile Include="Repositories\Concrete\UnsuitabilityReasonRepository.cs" />
+    <Compile Include="Repositories\Concrete\UserCategoryFormRightsRepository.cs" />
+    <Compile Include="Repositories\Concrete\UserCategoryRepository.cs" />
+    <Compile Include="Repositories\Concrete\UserDepositorRepository.cs" />
+    <Compile Include="Repositories\Concrete\UserListFormatRepository.cs" />
+    <Compile Include="Repositories\Concrete\UserRolesRepository.cs" />
+    <Compile Include="Repositories\Concrete\UsersRepository.cs" />
+    <Compile Include="Repositories\Concrete\VisualCategoryRepository.cs" />
+    <Compile Include="Repositories\Concrete\VisualizationLangRepository.cs" />
+    <Compile Include="Repositories\Concrete\VisualizationRepository.cs" />
+    <Compile Include="Repositories\Concrete\ZoneRepository.cs" />
+    <Compile Include="UoW\IUnitOfWork.cs" />
+    <Compile Include="UoW\UnitOfWork.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\LVCore.LVApp.Shared\LVCore.LVApp.Shared.csproj">
+      <Project>{9fd1c095-d114-45b6-8812-1075e7a34d57}</Project>
+      <Name>LVCore.LVApp.Shared</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\LVCore.LVAppService\LVCore.LVAppService.csproj">
+      <Project>{07a3fc12-9b90-414b-bd4e-cc54bcc89991}</Project>
+      <Name>LVCore.LVAppService</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\OrhAuth\OrhAuth.csproj">
+      <Project>{f6a9974a-a223-4f09-940e-df083eed1449}</Project>
+      <Name>OrhAuth</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\EntityFramework.6.4.4\build\EntityFramework.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\EntityFramework.6.4.4\build\EntityFramework.props'))" />
+    <Error Condition="!Exists('..\packages\EntityFramework.6.4.4\build\EntityFramework.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\EntityFramework.6.4.4\build\EntityFramework.targets'))" />
+  </Target>
+  <Import Project="..\packages\EntityFramework.6.4.4\build\EntityFramework.targets" Condition="Exists('..\packages\EntityFramework.6.4.4\build\EntityFramework.targets')" />
+</Project>

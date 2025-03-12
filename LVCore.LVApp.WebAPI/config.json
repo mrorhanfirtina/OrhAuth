@@ -1,0 +1,33 @@
+{
+  "FormParameters": {
+    "ConnectionString": "Data Source=ELOG-DB.horoz.com.tr;Initial catalog=LV3ADRTEST;User ID=Lv3Adr_user;Password=Xb?wDFZ?AZA",
+    "LanguageID": 3,
+    "DomainID": 1,
+    "LogisticSiteID": 2,
+    "UserName": "a",
+    "UserID": 1,
+    "DebugLevel": 0,
+    "CurrentID": 0,
+    "MetricSystemID": 0,
+    "ExecutablePath": ".",
+    "DatasetPath": "C:\\TrmLvision\\LV3ADR",
+    "SessionID": 10085,
+    "ShowMaximized": false,
+    "DataBaseType": 1,
+    "DataBaseVersionMajor": 0,
+    "DataBaseVersionMinor": 0,
+    "MultipleIDs": null,
+    "Local": true,
+    "RemoteMachine": null,
+    "RemoteTcpPort": null,
+    "DepositorAccess": null,
+    "LogisticSiteAccess": null,
+    "LogisticUnitID": 7,
+    "EmployeeID": 4,
+    "MaxRecords": 0,
+    "isOverride": false
+  },
+  "ReferencePaths": {
+    "LegacyDLLs": "C:\\TrmLvision\\LV3ADR"
+  }
+}
