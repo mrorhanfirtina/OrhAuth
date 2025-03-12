@@ -165,6 +165,7 @@ namespace OrhAuth.Services
             {
                 // Refresh token'ı iptal et
                 token.RevokedDate = DateTime.Now;
+                token.Revoked = DateTime.Now;
                 _refreshTokenRepository.Update(token);
                 throw new Exception("Refresh token süresi dolmuş");
             }
@@ -178,6 +179,7 @@ namespace OrhAuth.Services
 
             // Eski refresh token'ı iptal et
             token.RevokedDate = DateTime.Now;
+            token.Revoked = DateTime.Now;
             token.ReplacedByToken = accessToken.RefreshToken;
             _refreshTokenRepository.Update(token);
 
@@ -192,6 +194,82 @@ namespace OrhAuth.Services
             _refreshTokenRepository.Add(newRefreshToken);
 
             return accessToken;
+        }
+
+        public AccessToken RefreshToken(string refreshToken, Dictionary<string, string> customClaims = null)
+        {
+            var token = _refreshTokenRepository.Get(rt => rt.Token == refreshToken && rt.RevokedDate == null);
+            if (token == null)
+                throw new Exception("Geçersiz refresh token");
+
+            // Token süresi dolmuş mu?
+            if (token.Expires < DateTime.Now)
+            {
+                // Refresh token'ı iptal et
+                token.RevokedDate = DateTime.Now;
+                token.Revoked = DateTime.Now;
+                _refreshTokenRepository.Update(token);
+                throw new Exception("Refresh token süresi dolmuş");
+            }
+
+            var user = _userRepository.Get(u => u.Id == token.UserId);
+            if (user == null || !user.IsActive)
+                throw new Exception("Kullanıcı bulunamadı veya pasif durumda");
+
+            // Kullanıcı yetkilerini al
+            var claims = GetClaims(user);
+
+            // Token oluştur
+            AccessToken accessToken;
+
+            // Eğer özel claim'ler varsa, bunları kullanarak token oluştur
+            if (customClaims != null && customClaims.Count > 0)
+            {
+                accessToken = _tokenHelper.CreateToken(user, claims, customClaims);
+            }
+            else
+            {
+                // Özel claim yoksa, standart token oluştur
+                accessToken = _tokenHelper.CreateToken(user, claims);
+            }
+
+            // Eski refresh token'ı iptal et
+            token.RevokedDate = DateTime.Now;
+            token.Revoked = DateTime.Now;
+            token.ReplacedByToken = accessToken.RefreshToken;
+            _refreshTokenRepository.Update(token);
+
+            // Yeni refresh token oluştur
+            var newRefreshToken = new RefreshToken
+            {
+                UserId = user.Id,
+                Token = accessToken.RefreshToken,
+                Expires = DateTime.Now.AddDays(7),
+                CreatedByIp = "127.0.0.1" // Gerçek projede istemcinin IP'sini almalısınız
+            };
+            _refreshTokenRepository.Add(newRefreshToken);
+
+            return accessToken;
+        }
+
+        public int GetUserIdByRefreshToken(string refreshToken)
+        {
+            // Refresh token'ı bul
+            var token = _refreshTokenRepository.Get(rt => rt.Token == refreshToken && rt.RevokedDate == null);
+            if (token == null)
+                return 0;
+
+            // Token süresi dolmuş mu?
+            if (token.Expires < DateTime.Now)
+            {
+                // Refresh token'ı iptal et
+                token.RevokedDate = DateTime.Now;
+                _refreshTokenRepository.Update(token);
+                return 0;
+            }
+
+            // Kullanıcı ID'sini döndür
+            return token.UserId;
         }
 
         public bool ValidateToken(string token)

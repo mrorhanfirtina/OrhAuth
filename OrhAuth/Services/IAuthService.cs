@@ -19,6 +19,8 @@ namespace OrhAuth.Services
 
         // TOKEN YÖNETİMİ
         AccessToken RefreshToken(string refreshToken);
+        AccessToken RefreshToken(string refreshToken, Dictionary<string, string> customClaims = null);
+        int GetUserIdByRefreshToken(string refreshToken);
         bool ValidateToken(string token);
         bool RevokeToken(string refreshToken);
 

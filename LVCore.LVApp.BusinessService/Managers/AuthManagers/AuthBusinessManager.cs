@@ -222,7 +222,96 @@ namespace LVCore.LVApp.BusinessService.Managers.AuthManagers
 
         public async Task<AccessToken> RefreshTokenAsync(string refreshToken)
         {
-            return await Task.FromResult(_authService.RefreshToken(refreshToken));
+            try
+            {
+                // Önce refresh token'ı doğrula ve kullanıcı ID'sini al
+                var userId = _authService.GetUserIdByRefreshToken(refreshToken);
+                if (!(userId > 0))
+                {
+                    throw new Exception("Geçersiz refresh token");
+                }
+
+                // Kullanıcının tüm verilerini dinamik olarak çek
+                dynamic userDynamic = _authService.GetUserDynamicById(userId);
+
+                if (userDynamic == null)
+                {
+                    throw new Exception("Kullanıcı verileri alınamadı");
+                }
+
+                // Özel claim'leri oluştur
+                var customClaims = new Dictionary<string, string>();
+
+                // ExtendedUser tipini al
+                Type extendedUserType = typeof(ExtendedUser);
+
+                // AddToClaim özniteliği ile işaretlenmiş özellikleri bul
+                var propertiesWithAddToClaim = extendedUserType.GetProperties()
+                    .Where(p => p.GetCustomAttributes(typeof(AddToClaimAttribute), false).Length > 0)
+                    .ToList();
+
+                // Her bir özellik için
+                foreach (var property in propertiesWithAddToClaim)
+                {
+                    // Özellik adını al
+                    string propertyName = property.Name;
+
+                    // AddToClaim özniteliğini al
+                    var addToClaimAttr = property.GetCustomAttributes(typeof(AddToClaimAttribute), false)
+                        .FirstOrDefault() as AddToClaimAttribute;
+
+                    // Dynamic nesneden değeri al
+                    object value = null;
+
+                    // Dynamic nesne üzerinde property var mı kontrol et
+                    bool propertyExists = false;
+                    foreach (KeyValuePair<string, object> item in userDynamic)
+                    {
+                        if (item.Key == propertyName)
+                        {
+                            propertyExists = true;
+                            value = item.Value;
+                            break;
+                        }
+                    }
+
+                    // Eğer özellik dynamic nesnede varsa ve değeri null değilse
+                    if (propertyExists && value != null)
+                    {
+                        // Claim adını belirle (öznitelikte belirtilmişse onu kullan, yoksa özellik adını)
+                        string claimName = !string.IsNullOrEmpty(addToClaimAttr.ClaimName)
+                            ? addToClaimAttr.ClaimName
+                            : propertyName;
+
+                        // Prefix ekle
+                        string fullClaimName = addToClaimAttr.Prefix + claimName;
+
+                        // Dictionary'e ekle
+                        customClaims[fullClaimName] = value.ToString();
+                    }
+                }
+
+                // Token oluştur
+                AccessToken token;
+
+                // Eğer özel claim'ler varsa, bunları kullanarak token oluştur
+                if (customClaims.Count > 0)
+                {
+                    token = _authService.RefreshToken(refreshToken, customClaims);
+                }
+                else
+                {
+                    // Özel claim yoksa, standart token oluştur
+                    token = _authService.RefreshToken(refreshToken);
+                }
+
+                return await Task.FromResult(token);
+            }
+            catch (Exception ex)
+            {
+                // Hata loglama
+                throw new Exception("RefreshTokenAsync sırasında hata oluştu");
+            }
         }
 
         public async Task<bool> ValidateTokenAsync(string token)
