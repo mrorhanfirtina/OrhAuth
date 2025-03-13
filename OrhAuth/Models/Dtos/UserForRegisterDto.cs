@@ -1,4 +1,6 @@
-﻿namespace OrhAuth.Models.Dtos
+﻿using System.Collections.Generic;
+
+namespace OrhAuth.Models.Dtos
 {
     public class UserForRegisterDto
     {
@@ -7,5 +9,12 @@
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string LocalityId { get; set; }
+
+        public ICollection<UserOperationClaimDto> UserOperationClaims { get; set; }
+
+        public UserForRegisterDto()
+        {
+            UserOperationClaims = new List<UserOperationClaimDto>();
+        }
     }
 }

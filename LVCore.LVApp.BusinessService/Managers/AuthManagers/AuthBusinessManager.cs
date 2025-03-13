@@ -45,6 +45,8 @@ namespace LVCore.LVApp.BusinessService.Managers.AuthManagers
                 LocalityId = model.LocalityId
             };
 
+            baseUserDto.UserOperationClaims = model.UserOperationClaims;
+
             var user = await _loginBusinessManager.Login(model.LVUserLogin, model.LVPasswordText);
 
             // ExtendedUser modeli oluştur

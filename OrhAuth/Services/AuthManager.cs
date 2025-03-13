@@ -57,6 +57,11 @@ namespace OrhAuth.Services
                 LocalityId = userForRegisterDto.LocalityId
             };
 
+            foreach (var claim in userForRegisterDto.UserOperationClaims)
+            {
+                user.UserOperationClaims.Add(new UserOperationClaim { OperationClaimId = claim.OperationClaimId });
+            }
+
             _userRepository.Add(user);
             return user;
         }
@@ -893,6 +898,41 @@ namespace OrhAuth.Services
                             }
                         }
                     }
+
+                    // Kullanıcının operasyon yetkilerini al
+                    var operationClaims = new List<dynamic>();
+
+                    // SQL sorgusu: Kullanıcının yetkilerini al
+                    string query = @"
+                                SELECT oc.Id, oc.Name 
+                                FROM OperationClaims oc
+                                INNER JOIN UserOperationClaims uoc ON oc.Id = uoc.OperationClaimId
+                                WHERE uoc.UserId = @UserId";
+
+                    System.Diagnostics.Debug.WriteLine($"Kullanıcı ID: {user.Id} için yetkileri sorguluyorum");
+
+                    using (var command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@UserId", user.Id);
+                        using (var reader = command.ExecuteReader())
+                        {
+                            int count = 0;
+                            while (reader.Read())
+                            {
+                                count++;
+                                var claim = new ExpandoObject() as IDictionary<string, object>;
+                                claim["Id"] = reader.GetInt32(0);
+                                claim["Name"] = reader.GetString(1);
+                                operationClaims.Add(claim);
+
+                                System.Diagnostics.Debug.WriteLine($"Yetki bulundu: ID={reader.GetInt32(0)}, Name={reader.GetString(1)}");
+                            }
+                            System.Diagnostics.Debug.WriteLine($"Toplam {count} yetki bulundu");
+                        }
+                    }
+
+                    // Dinamik nesneye operasyon yetkilerini ekle
+                    dynamicUser["UserOperationClaims"] = operationClaims;
                 }
 
                 return dynamicUser;

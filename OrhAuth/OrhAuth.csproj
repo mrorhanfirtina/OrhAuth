@@ -110,6 +110,7 @@
     <Compile Include="Models\Dtos\AccessToken.cs" />
     <Compile Include="Models\Dtos\UserForLoginDto.cs" />
     <Compile Include="Models\Dtos\UserForRegisterDto.cs" />
+    <Compile Include="Models\Dtos\UserOperationClaimDto.cs" />
     <Compile Include="Models\Entities\Base\EntityBase.cs" />
     <Compile Include="Models\Entities\OperationClaim.cs" />
     <Compile Include="Models\Entities\RefreshToken.cs" />
