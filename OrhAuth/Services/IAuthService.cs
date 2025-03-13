@@ -49,7 +49,7 @@ namespace OrhAuth.Services
         bool AssignClaimToRole(int roleId, int operationClaimId);
 
         // GENİŞLETİLMİŞ KULLANICI İŞLEMLERİ
-        User RegisterExtendedUser(UserForRegisterDto baseUser, object extendedProperties);
+        dynamic RegisterExtendedUser(UserForRegisterDto baseUser, object extendedProperties);
         bool UpdateExtendedUser(int userId, object extendedProperties);
         dynamic GetExtendedUserInfo(int userId);
 

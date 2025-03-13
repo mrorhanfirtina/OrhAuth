@@ -1,6 +1,7 @@
 ﻿using LVCore.LVApp.BusinessService.Services.AuthServices;
 using LVCore.LVApp.Shared.Dtos.AuthDtos;
 using LVCore.LVApp.Shared.ExtendEntities;
+using LVCore.LVApp.Shared.Static;
 using Microsoft.Owin.Logging;
 using OrhAuth.Attributes;
 using OrhAuth.Models.Dtos;
@@ -8,6 +9,7 @@ using OrhAuth.Models.Entities;
 using OrhAuth.Services;
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -16,10 +18,12 @@ namespace LVCore.LVApp.BusinessService.Managers.AuthManagers
     public class AuthBusinessManager : IAuthBusinessService
     {
         private readonly IAuthService _authService;
+        private readonly Services.ILoginBusinessService _loginBusinessManager;
 
-        public AuthBusinessManager(IAuthService authService)
+        public AuthBusinessManager(IAuthService authService, Services.ILoginBusinessService loginBusinessManager)
         {
             _authService = authService;
+            _loginBusinessManager = loginBusinessManager;
         }
 
         #region 1. Kullanıcı Yönetimi
@@ -41,18 +45,23 @@ namespace LVCore.LVApp.BusinessService.Managers.AuthManagers
                 LocalityId = model.LocalityId
             };
 
+            var user = await _loginBusinessManager.Login(model.LVUserLogin, model.LVPasswordText);
+
             // ExtendedUser modeli oluştur
             var extendedProperties = new ExtendedUser
             {
                 // Özel alanları model'den al
-                LVUserId = model.LVUserId,
-                LVUserLogin = model.LVUserLogin,
-                LVPassword = model.LVPasswordText,
+                LVUserId = user.usr_ID,
+                LVUserLogin = user.usr_Login,
+                LVPassword = user.usr_Password,
                 // Diğer extended özellikler...
             };
 
             var result = await Task.FromResult(_authService.RegisterExtendedUser(baseUserDto, extendedProperties));
-            return result as ExtendedUser;
+
+            var extendedUser = ((ExpandoObject)result).ConvertTo<ExtendedUser>();
+
+            return extendedUser;
         }
 
         public async Task<AccessToken> LoginAsync(UserForLoginDto model)

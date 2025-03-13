@@ -12,13 +12,18 @@ namespace OrhAuth.Data.Context
             new Dictionary<Type, List<PropertyMetadata>>();
 
         private static readonly object _lockObject = new object();
+        private static Type _extendedUserType;
 
+        // RegisterExtendedType metodunu güncelle
         public static void RegisterExtendedType(Type extendedType)
         {
             try
             {
                 if (extendedType == null)
                     throw new ArgumentNullException(nameof(extendedType), "Genişletilmiş tip null olamaz!");
+
+                // Genişletilmiş tipi sakla
+                _extendedUserType = extendedType;
 
                 lock (_lockObject)
                 {
@@ -60,6 +65,12 @@ namespace OrhAuth.Data.Context
                 System.Diagnostics.Debug.WriteLine($"RegisterExtendedType hatası: {ex.Message}");
                 throw; // Hatayı tekrar fırlat
             }
+        }
+
+        // Genişletilmiş User tipini almak için yeni metot ekle
+        public static Type GetExtendedUserType()
+        {
+            return _extendedUserType;
         }
 
         // Mevcut GetExtendedProperties metodu aynen kalacak

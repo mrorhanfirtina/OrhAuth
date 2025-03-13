@@ -4,6 +4,6 @@
     {
         public int LVUserId { get; set; }
         public string LVUserLogin { get; set; }
-        public byte[] LVPasswordText { get; set; } // Güncelleme sırasında LVPassword değişecekse
+        public string LVPasswordText { get; set; } // Güncelleme sırasında LVPassword değişecekse
     }
 }

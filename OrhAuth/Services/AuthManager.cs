@@ -11,6 +11,7 @@ using System.Dynamic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Text;
 
 namespace OrhAuth.Services
 {
@@ -648,50 +649,146 @@ namespace OrhAuth.Services
 
         #region Genişletilmiş Kullanıcı İşlemleri
 
-        public User RegisterExtendedUser(UserForRegisterDto baseUser, object extendedProperties)
+        public dynamic RegisterExtendedUser(UserForRegisterDto baseUser, object extendedProperties)
         {
-            // Önce standart kullanıcı kaydını gerçekleştir
-            var user = Register(baseUser);
-
-            // Reflection ile genişletilmiş özellikleri ekle
-            if (extendedProperties != null && user != null)
+            try
             {
-                // Genişletilmiş özellikler tipi User sınıfından türemiş olmalı
-                Type extendedType = extendedProperties.GetType();
-                if (extendedType.IsSubclassOf(typeof(User)))
-                {
-                    foreach (var property in extendedType.GetProperties())
-                    {
-                        // Sadece ExtendUser özniteliği taşıyan özellikleri işle
-                        if (property.IsDefined(typeof(Attributes.ExtendUserAttribute), false))
-                        {
-                            var value = property.GetValue(extendedProperties);
+                // Önce standart kullanıcı kaydını gerçekleştir
+                var user = Register(baseUser);
+                if (user == null || extendedProperties == null)
+                    return user;
 
-                            // User sınıfındaki aynı isme sahip özelliği bul ve değerini ata
-                            var userProperty = user.GetType().GetProperty(property.Name);
-                            if (userProperty != null && userProperty.CanWrite)
-                            {
-                                userProperty.SetValue(user, value);
-                            }
-                        }
-                    }
+                // Genişletilmiş özellikleri SQL ile güncelle
+                UpdateExtendedPropertiesWithSQL(user.Id, extendedProperties);
 
-                    // Genişletilmiş özellikleri güncelle
-                    _userRepository.Update(user);
-                }
+                // Güncellenmiş kullanıcıyı al
+                return GetUserDynamicById(user.Id);
             }
-
-            return user;
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"RegisterExtendedUser hatası: {ex.Message}");
+                return null;
+            }
         }
 
         public bool UpdateExtendedUser(int userId, object extendedProperties)
         {
-            var user = _userRepository.Get(u => u.Id == userId);
-            if (user == null)
-                return false;
+            try
+            {
+                var user = _userRepository.Get(u => u.Id == userId);
+                if (user == null || extendedProperties == null)
+                    return false;
 
-            // Reflection ile genişletilmiş özellikleri güncelle
-            if (extendedProperties != null)
+                // Genişletilmiş özellikleri SQL ile güncelle
+                return UpdateExtendedPropertiesWithSQL(userId, extendedProperties);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"UpdateExtendedUser hatası: {ex.Message}");
+                return false;
+            }
+        }
+
+        private bool UpdateExtendedPropertiesWithSQL(int userId, object extendedProperties)
+        {
+            try
+            {
+                // Güncellenecek özellikleri ve değerlerini topla
+                var updateColumns = new Dictionary<string, object>();
+
+                foreach (var property in extendedProperties.GetType().GetProperties())
+                {
+                    // Sadece ExtendUser özniteliği taşıyan özellikleri işle
+                    if (property.IsDefined(typeof(Attributes.ExtendUserAttribute), false))
+                    {
+                        var value = property.GetValue(extendedProperties);
+                        updateColumns.Add(property.Name, value);
+                    }
+                }
+
+                if (updateColumns.Count == 0)
+                    return false;
+
+                // SQL UPDATE cümlesi oluştur
+                var sqlBuilder = new StringBuilder();
+                sqlBuilder.Append("UPDATE Users SET ");
+
+                var parameters = new List<SqlParameter>();
+                var updateParts = new List<string>();
+
+                foreach (var column in updateColumns)
+                {
+                    string paramName = $"@{column.Key}";
+                    updateParts.Add($"{column.Key} = {paramName}");
+                    parameters.Add(new SqlParameter(paramName, column.Value ?? DBNull.Value));
+                }
+
+                sqlBuilder.Append(string.Join(", ", updateParts));
+                sqlBuilder.Append(" WHERE Id = @UserId");
+                parameters.Add(new SqlParameter("@UserId", userId));
+
+                // SQL komutunu çalıştır
+                using (var connection = new SqlConnection(_connectionString))
+                {
+                    connection.Open();
+                    using (var command = new SqlCommand(sqlBuilder.ToString(), connection))
+                    {
+                        command.Parameters.AddRange(parameters.ToArray());
+                        int rowsAffected = command.ExecuteNonQuery();
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"UpdateExtendedPropertiesWithSQL hatası: {ex.Message}");
+                return false;
+            }
+        }
+
+        // Standart kullanıcıyı genişletilmiş tipe dönüştürmek için yardımcı metot
+        private User ConvertToExtendedUser(User user, Type extendedUserType)
+        {
+            try
+            {
+                // Genişletilmiş tipte yeni bir nesne oluştur
+                var extendedUser = Activator.CreateInstance(extendedUserType) as User;
+                if (extendedUser == null)
+                    return null;
+
+                // Temel User özelliklerini kopyala
+                foreach (var property in typeof(User).GetProperties())
+                {
+                    if (property.CanWrite)
+                    {
+                        var extendedProperty = extendedUserType.GetProperty(property.Name);
+                        if (extendedProperty != null && extendedProperty.CanWrite)
+                        {
+                            var value = property.GetValue(user);
+                            extendedProperty.SetValue(extendedUser, value);
+                        }
+                    }
+                }
+
+                // Standart kullanıcıyı sil
+                _userRepository.Delete(user);
+
+                // Genişletilmiş kullanıcıyı ekle
+                _userRepository.Add(extendedUser);
+
+                return extendedUser;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ConvertToExtendedUser hatası: {ex.Message}");
+                return null;
+            }
+        }
+
+        // Mevcut güncelleme mantığı (geriye dönük uyumluluk için)
+        private bool UpdateStandardExtendedUser(User user, object extendedProperties)
+        {
+            try
             {
                 foreach (var property in extendedProperties.GetType().GetProperties())
                 {
@@ -712,24 +809,17 @@ namespace OrhAuth.Services
                 _userRepository.Update(user);
                 return true;
             }
-
-            return false;
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"UpdateStandardExtendedUser hatası: {ex.Message}");
+                return false;
+            }
         }
 
         public dynamic GetExtendedUserInfo(int userId)
         {
-            var user = _userRepository.Get(u => u.Id == userId);
-            if (user == null)
-                return null;
-
-            // Kullanıcı genişletilmiş tipte ise doğrudan döndür
-            if (user.GetType() != typeof(User))
-            {
-                return user;
-            }
-
-            // Genişletilmiş tip değilse, standart User nesnesini döndür
-            return user;
+            // Dinamik sorgu metodunu kullan
+            return GetUserDynamicById(userId);
         }
 
         #endregion
@@ -768,12 +858,44 @@ namespace OrhAuth.Services
             using (var context = new AuthDbContext(_connectionString))
             {
                 var user = context.Users.AsNoTracking().FirstOrDefault(filter);
-
                 if (user == null)
                     return null;
 
-                // Bulunan kullanıcının ID'sine göre tüm alanları SQL ile çek
-                return GetUserDynamicWithAllFieldsById(user.Id);
+                // Dinamik nesne oluştur
+                var dynamicUser = new ExpandoObject() as IDictionary<string, object>;
+
+                // Temel User özelliklerini kopyala
+                foreach (var property in typeof(User).GetProperties())
+                {
+                    dynamicUser[property.Name] = property.GetValue(user);
+                }
+
+                // Genişletilmiş özellikleri SQL ile al
+                using (var connection = new SqlConnection(_connectionString))
+                {
+                    connection.Open();
+                    using (var command = new SqlCommand($"SELECT * FROM Users WHERE Id = @UserId", connection))
+                    {
+                        command.Parameters.AddWithValue("@UserId", user.Id);
+                        using (var reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                // Genişletilmiş özellikleri al
+                                for (int i = 0; i < reader.FieldCount; i++)
+                                {
+                                    string columnName = reader.GetName(i);
+                                    if (!typeof(User).GetProperties().Any(p => p.Name == columnName))
+                                    {
+                                        dynamicUser[columnName] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                return dynamicUser;
             }
         }
 

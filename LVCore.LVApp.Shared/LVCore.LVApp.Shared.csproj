@@ -284,6 +284,7 @@
     <Compile Include="ExtendEntities\ExtendedUser.cs" />
     <Compile Include="Pagination\PaginatedList.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Static\ExpandoExtension.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Models\" />

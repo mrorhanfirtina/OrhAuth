@@ -12,6 +12,6 @@ namespace LVCore.LVApp.Shared.ExtendEntities
         [ExtendUser(maxLength: 100, isRequired: true, defaultValue: "aykut")]
         public string LVUserLogin { get; set; }
         [ExtendUser]
-        public byte[] LVPassword { get; set; }
+        public string LVPassword { get; set; }
     }
 }

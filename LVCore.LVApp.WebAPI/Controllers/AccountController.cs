@@ -30,7 +30,7 @@ namespace LVCore.LVApp.WebAPI.Controllers
                     return Content(HttpStatusCode.BadRequest, "Email ve şifre gereklidir");
 
                 var user = await _authService.RegisterAsync(model);
-                return Ok(new { success = true, userId = user.Id });
+                return Ok(new { success = true, item = user });
             }
             catch (Exception ex)
             {
@@ -46,7 +46,7 @@ namespace LVCore.LVApp.WebAPI.Controllers
             try
             {
                 var user = await _authService.RegisterExtendedAsync(model);
-                return Ok(new { success = true, userId = user.Id });
+                return Ok(new { success = true, item = user });
             }
             catch (Exception ex)
             {
