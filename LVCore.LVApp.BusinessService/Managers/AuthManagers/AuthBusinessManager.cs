@@ -59,7 +59,7 @@ namespace LVCore.LVApp.BusinessService.Managers.AuthManagers
                 // Diğer extended özellikler...
             };
 
-            var result = await Task.FromResult(_authService.RegisterExtendedUser(baseUserDto, extendedProperties));
+            var result = _authService.RegisterExtendedUser(baseUserDto, extendedProperties);
 
             var extendedUser = ((ExpandoObject)result).ConvertTo<ExtendedUser>();
 

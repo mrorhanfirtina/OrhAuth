@@ -660,8 +660,27 @@ namespace OrhAuth.Services
             {
                 // Önce standart kullanıcı kaydını gerçekleştir
                 var user = Register(baseUser);
-                if (user == null || extendedProperties == null)
+
+                // Debug bilgileri
+                System.Diagnostics.Debug.WriteLine($"User null mu: {user == null}");
+                System.Diagnostics.Debug.WriteLine($"extendedProperties null mu: {extendedProperties == null}");
+                if (extendedProperties != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"extendedProperties tipi: {extendedProperties.GetType().FullName}");
+                }
+
+                // Null kontrolü
+                if (user == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("User null!");
                     return user;
+                }
+
+                if (extendedProperties == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("extendedProperties null!");
+                    return user;
+                }
 
                 // Genişletilmiş özellikleri SQL ile güncelle
                 UpdateExtendedPropertiesWithSQL(user.Id, extendedProperties);
@@ -904,10 +923,10 @@ namespace OrhAuth.Services
 
                     // SQL sorgusu: Kullanıcının yetkilerini al
                     string query = @"
-                                SELECT oc.Id, oc.Name 
+                                SELECT uoc.Id, uoc.UserId, uoc.OperationClaimId, oc.[Name] ClaimName 
                                 FROM OperationClaims oc
                                 INNER JOIN UserOperationClaims uoc ON oc.Id = uoc.OperationClaimId
-                                WHERE uoc.UserId = @UserId";
+                                WHERE uoc.IsDeleted = 0 AND uoc.UserId = @UserId";
 
                     System.Diagnostics.Debug.WriteLine($"Kullanıcı ID: {user.Id} için yetkileri sorguluyorum");
 
@@ -921,11 +940,12 @@ namespace OrhAuth.Services
                             {
                                 count++;
                                 var claim = new ExpandoObject() as IDictionary<string, object>;
-                                claim["Id"] = reader.GetInt32(0);
-                                claim["Name"] = reader.GetString(1);
+                                claim["Id"] = reader.GetInt32(reader.GetOrdinal("Id"));
+                                claim["UserId"] = reader.GetInt32(reader.GetOrdinal("UserId"));
+                                claim["OperationClaimId"] = reader.GetInt32(reader.GetOrdinal("OperationClaimId"));
+                                claim["ClaimName"] = reader.GetString(reader.GetOrdinal("ClaimName"));
                                 operationClaims.Add(claim);
 
-                                System.Diagnostics.Debug.WriteLine($"Yetki bulundu: ID={reader.GetInt32(0)}, Name={reader.GetString(1)}");
                             }
                             System.Diagnostics.Debug.WriteLine($"Toplam {count} yetki bulundu");
                         }
