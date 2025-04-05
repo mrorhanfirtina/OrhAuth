@@ -105,6 +105,7 @@
     <Compile Include="Data\EntityConfigurations\UserOperationClaimConfiguration.cs" />
     <Compile Include="Data\Repositories\Abstract\IEntityRepository.cs" />
     <Compile Include="Data\Repositories\Concrete\EfEntityRepositoryBase.cs" />
+    <Compile Include="Exceptions\OrhAuthException.cs" />
     <Compile Include="Extensions\OrhAuthExtensions.cs" />
     <Compile Include="Middleware\OrhAuthMiddleware.cs" />
     <Compile Include="Models\Dtos\AccessToken.cs" />
@@ -126,11 +127,7 @@
     <Compile Include="Services\AuthManager.cs" />
     <Compile Include="Services\IAuthService.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Constants\" />
-    <Folder Include="Data\Migrations\" />
-    <Folder Include="Helpers\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <None Include="App.config" />
     <None Include="OrhAuth.nuspec" />

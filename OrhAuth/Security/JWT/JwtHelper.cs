@@ -13,11 +13,17 @@ using OrhAuth.Attributes;
 
 namespace OrhAuth.Security.JWT
 {
+    /// <summary>
+    /// Helper class responsible for creating, signing, and validating JWT tokens used for authentication and authorization.
+    /// </summary>
     public class JwtHelper : ITokenHelper
     {
         private readonly TokenOptions _tokenOptions;
         private DateTime _accessTokenExpiration;
 
+        /// <summary>
+        /// Initializes a new instance of <see cref="JwtHelper"/> using configuration values from App.config or Web.config.
+        /// </summary>
         public JwtHelper()
         {
             _tokenOptions = new TokenOptions
@@ -30,7 +36,13 @@ namespace OrhAuth.Security.JWT
             };
         }
 
-        // Parametreli constructor
+        /// <summary>
+        /// Initializes a new instance of <see cref="JwtHelper"/> using specified parameters.
+        /// </summary>
+        /// <param name="securityKey">Signing key for token generation.</param>
+        /// <param name="issuer">Token issuer (usually API).</param>
+        /// <param name="audience">Token audience (usually frontend).</param>
+        /// <param name="expirationMinutes">Access token expiration time in minutes.</param>
         public JwtHelper(string securityKey, string issuer, string audience, int expirationMinutes)
         {
             _tokenOptions = new TokenOptions
@@ -39,10 +51,13 @@ namespace OrhAuth.Security.JWT
                 Issuer = issuer,
                 Audience = audience,
                 AccessTokenExpiration = expirationMinutes,
-                RefreshTokenTTL = 7 // Varsayılan 7 gün
+                RefreshTokenTTL = 7 // Default 7 days
             };
         }
 
+        /// <summary>
+        /// Creates an access token for the specified user and roles.
+        /// </summary>
         public AccessToken CreateToken(User user, List<OperationClaim> operationClaims)
         {
             _accessTokenExpiration = DateTime.Now.AddMinutes(_tokenOptions.AccessTokenExpiration);
@@ -61,7 +76,10 @@ namespace OrhAuth.Security.JWT
         }
 
 
-
+        /// <summary>
+        /// Creates a secure random refresh token.
+        /// </summary>
+        /// <returns>A base64-encoded refresh token string.</returns>
         public string CreateRefreshToken()
         {
             byte[] number = new byte[32];
@@ -72,7 +90,14 @@ namespace OrhAuth.Security.JWT
             }
         }
 
-        // JwtSecurityToken oluşturma metodunu güncelle
+        /// <summary>
+        /// Creates a <see cref="JwtSecurityToken"/> for the specified user and their associated operation claims.
+        /// </summary>
+        /// <param name="tokenOptions">The token configuration options including issuer, audience, expiration, and signing key.</param>
+        /// <param name="user">The user for whom the token is being generated.</param>
+        /// <param name="signingCredentials">The signing credentials used to sign the token.</param>
+        /// <param name="operationClaims">A list of roles or permissions associated with the user.</param>
+        /// <returns>A JWT token including the user's identity and roles.</returns>
         private JwtSecurityToken CreateJwtSecurityToken(TokenOptions tokenOptions, User user,
             SigningCredentials signingCredentials, List<OperationClaim> operationClaims)
         {
@@ -80,7 +105,14 @@ namespace OrhAuth.Security.JWT
             return CreateJwtSecurityToken(tokenOptions, claims, signingCredentials);
         }
 
-        // Yeni metot: Doğrudan claim listesi alan JwtSecurityToken oluşturma metodu
+
+        /// <summary>
+        /// Creates a <see cref="JwtSecurityToken"/> directly from a list of claims.
+        /// </summary>
+        /// <param name="tokenOptions">The token configuration options including issuer, audience, expiration, and signing key.</param>
+        /// <param name="claims">The claims to be embedded in the token.</param>
+        /// <param name="signingCredentials">The signing credentials used to sign the token.</param>
+        /// <returns>A signed JWT token that contains the provided claims.</returns>
         private JwtSecurityToken CreateJwtSecurityToken(TokenOptions tokenOptions,
             IEnumerable<Claim> claims, SigningCredentials signingCredentials)
         {
@@ -96,11 +128,18 @@ namespace OrhAuth.Security.JWT
             return jwt;
         }
 
+
+        /// <summary>
+        /// Generates a collection of <see cref="Claim"/> objects based on the user's identity and assigned roles.
+        /// It also includes additional claims for extended user types marked with the <see cref="AddToClaimAttribute"/>.
+        /// </summary>
+        /// <param name="user">The user entity containing identity and extended information.</param>
+        /// <param name="operationClaims">A list of roles (operation claims) assigned to the user.</param>
+        /// <returns>A list of claims representing the user's identity, roles, and optionally extended properties.</returns>
         private IEnumerable<Claim> SetClaims(User user, List<OperationClaim> operationClaims)
         {
             var claims = new List<Claim>();
 
-            // Temel kullanıcı özellikleri için null kontrolü
             claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
             claims.Add(new Claim(ClaimTypes.Email, user.Email ?? ""));
             claims.Add(new Claim(ClaimTypes.Name, $"{user.FirstName ?? ""} {user.LastName ?? ""}".Trim()));
@@ -112,7 +151,6 @@ namespace OrhAuth.Security.JWT
 
             claims.Add(new Claim("UserId", user.Id.ToString()));
 
-            // ExtendedUser için AddToClaim attribute'u ile işaretlenmiş özellikleri ekle
             if (user.GetType() != typeof(User))
             {
                 var userType = user.GetType();
@@ -120,7 +158,6 @@ namespace OrhAuth.Security.JWT
 
                 foreach (var property in properties)
                 {
-                    // AddToClaim özniteliğini kontrol et
                     var addToClaimAttr = property.GetCustomAttributes(typeof(AddToClaimAttribute), false)
                         .FirstOrDefault() as AddToClaimAttribute;
 
@@ -129,12 +166,10 @@ namespace OrhAuth.Security.JWT
                         var value = property.GetValue(user);
                         if (value != null)
                         {
-                            // Öznitelikte belirtilen claim adını veya property adını kullan
                             string claimName = !string.IsNullOrEmpty(addToClaimAttr.ClaimName)
                                 ? addToClaimAttr.ClaimName
                                 : $"{addToClaimAttr.Prefix}{property.Name}";
 
-                            // byte[] tipindeki özellikleri atla
                             if (value.GetType() != typeof(byte[]))
                             {
                                 claims.Add(new Claim(claimName, value.ToString()));
@@ -144,7 +179,6 @@ namespace OrhAuth.Security.JWT
                 }
             }
 
-            // Kullanıcı rolleri için null kontrolü
             if (operationClaims != null)
             {
                 foreach (var claim in operationClaims)
@@ -159,7 +193,16 @@ namespace OrhAuth.Security.JWT
             return claims;
         }
 
-        // JwtHelper sınıfına eklenecek metod
+
+        /// <summary>
+        /// Validates the specified JWT token using the configured token options.
+        /// Checks signature, issuer, audience, and expiration date.
+        /// </summary>
+        /// <param name="token">The JWT token to validate.</param>
+        /// <returns>
+        /// <c>true</c> if the token is valid according to the configured security settings; 
+        /// otherwise, <c>false</c>.
+        /// </returns>
         public bool ValidateToken(string token)
         {
             try
@@ -187,6 +230,15 @@ namespace OrhAuth.Security.JWT
             }
         }
 
+        /// <summary>
+        /// Creates a JWT access token for the specified user, including their roles and any additional claims.
+        /// </summary>
+        /// <param name="user">The user for whom the token is being generated.</param>
+        /// <param name="operationClaims">The list of operation claims (roles/permissions) assigned to the user.</param>
+        /// <param name="additionalClaims">A collection of additional custom claims to be included in the token.</param>
+        /// <returns>
+        /// An <see cref="AccessToken"/> object containing the generated JWT, its expiration time, and a refresh token.
+        /// </returns>
         public AccessToken CreateToken(User user, List<OperationClaim> operationClaims, IEnumerable<Claim> additionalClaims)
         {
             _accessTokenExpiration = DateTime.Now.AddMinutes(_tokenOptions.AccessTokenExpiration);
@@ -214,6 +266,15 @@ namespace OrhAuth.Security.JWT
             };
         }
 
+        /// <summary>
+        /// Creates a JWT access token for the specified user, including their roles and additional claims provided as a dictionary.
+        /// </summary>
+        /// <param name="user">The user for whom the token is being generated.</param>
+        /// <param name="operationClaims">The list of operation claims (roles/permissions) assigned to the user.</param>
+        /// <param name="additionalClaims">A dictionary of additional claims to include in the token, where the key is the claim type and the value is the claim value.</param>
+        /// <returns>
+        /// An <see cref="AccessToken"/> object containing the generated JWT, its expiration time, and a refresh token.
+        /// </returns>
         public AccessToken CreateToken(User user, List<OperationClaim> operationClaims, Dictionary<string, string> additionalClaims)
         {
             // Dictionary'yi Claim listesine dönüştür
