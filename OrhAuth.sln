@@ -5,16 +5,6 @@ VisualStudioVersion = 17.12.35506.116
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrhAuth", "OrhAuth\OrhAuth.csproj", "{F6A9974A-A223-4F09-940E-DF083EED1449}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LVCore.LVApp.BusinessService", "LVCore.LVApp.BusinessService\LVCore.LVApp.BusinessService.csproj", "{529F9D68-CD13-4ADD-9F6C-2F70808D6D1D}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LVCore.LVApp.DataAccessService", "LVCore.LVApp.DataAccessService\LVCore.LVApp.DataAccessService.csproj", "{73BE2E48-261C-4AA4-92AC-EECF0BA53AAD}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LVCore.LVApp.Shared", "LVCore.LVApp.Shared\LVCore.LVApp.Shared.csproj", "{9FD1C095-D114-45B6-8812-1075E7A34D57}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LVCore.LVApp.WebAPI", "LVCore.LVApp.WebAPI\LVCore.LVApp.WebAPI.csproj", "{E84637C5-EDF5-4816-BE4E-ADF02C678021}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LVCore.LVAppService", "LVCore.LVAppService\LVCore.LVAppService.csproj", "{07A3FC12-9B90-414B-BD4E-CC54BCC89991}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -25,26 +15,6 @@ Global
 		{F6A9974A-A223-4F09-940E-DF083EED1449}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F6A9974A-A223-4F09-940E-DF083EED1449}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F6A9974A-A223-4F09-940E-DF083EED1449}.Release|Any CPU.Build.0 = Release|Any CPU
-		{529F9D68-CD13-4ADD-9F6C-2F70808D6D1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{529F9D68-CD13-4ADD-9F6C-2F70808D6D1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{529F9D68-CD13-4ADD-9F6C-2F70808D6D1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{529F9D68-CD13-4ADD-9F6C-2F70808D6D1D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{73BE2E48-261C-4AA4-92AC-EECF0BA53AAD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{73BE2E48-261C-4AA4-92AC-EECF0BA53AAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{73BE2E48-261C-4AA4-92AC-EECF0BA53AAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{73BE2E48-261C-4AA4-92AC-EECF0BA53AAD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9FD1C095-D114-45B6-8812-1075E7A34D57}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9FD1C095-D114-45B6-8812-1075E7A34D57}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9FD1C095-D114-45B6-8812-1075E7A34D57}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9FD1C095-D114-45B6-8812-1075E7A34D57}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E84637C5-EDF5-4816-BE4E-ADF02C678021}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E84637C5-EDF5-4816-BE4E-ADF02C678021}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E84637C5-EDF5-4816-BE4E-ADF02C678021}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E84637C5-EDF5-4816-BE4E-ADF02C678021}.Release|Any CPU.Build.0 = Release|Any CPU
-		{07A3FC12-9B90-414B-BD4E-CC54BCC89991}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{07A3FC12-9B90-414B-BD4E-CC54BCC89991}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{07A3FC12-9B90-414B-BD4E-CC54BCC89991}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{07A3FC12-9B90-414B-BD4E-CC54BCC89991}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
