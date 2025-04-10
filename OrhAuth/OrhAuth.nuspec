@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>OrhAuth</id>
-    <version>1.0.19</version>
+    <version>1.1.1</version>
     <authors>Orhan Fırtına</authors>
     <owners>OrhSoft</owners>
     <description>JWT-based authentication and authorization library.</description>
@@ -10,7 +10,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <!--<projectUrl>https://github.com/orhanf/orhauth</projectUrl>-->
     <icon>Images/logo.png</icon>
-    <releaseNotes>First release</releaseNotes>
+    <releaseNotes>Updated</releaseNotes>
     <readme>README.md</readme>
     <copyright>Copyright 2025</copyright>
     <dependencies>

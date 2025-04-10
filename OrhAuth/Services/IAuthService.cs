@@ -31,12 +31,12 @@ namespace OrhAuth.Services
         /// <summary>
         /// Creates an access token for a given user.
         /// </summary>
-        AccessToken CreateAccessToken(User user);
+        AccessToken CreateAccessToken(User user, string createdByIp = "127.0.0.1");
 
         /// <summary>
         /// Creates an access token with additional custom claims.
         /// </summary>
-        AccessToken CreateAccessToken(User user, Dictionary<string, string> customClaims = null);
+        AccessToken CreateAccessToken(User user, Dictionary<string, string> customClaims, string createdByIp = "127.0.0.1");
 
         /// <summary>
         /// Retrieves the list of operation claims assigned to a user.
@@ -55,12 +55,12 @@ namespace OrhAuth.Services
         /// <summary>
         /// Generates a new access token using the refresh token.
         /// </summary>
-        AccessToken RefreshToken(string refreshToken);
+        AccessToken RefreshToken(string refreshToken, string createdByIp = "127.0.0.1");
 
         /// <summary>
         /// Generates a new access token using refresh token and custom claims.
         /// </summary>
-        AccessToken RefreshToken(string refreshToken, Dictionary<string, string> customClaims = null);
+        AccessToken RefreshToken(string refreshToken, Dictionary<string, string> customClaims, string createdByIp = "127.0.0.1");
 
         /// <summary>
         /// Retrieves user ID associated with the given refresh token.

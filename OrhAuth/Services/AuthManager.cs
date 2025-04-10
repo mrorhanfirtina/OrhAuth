@@ -141,7 +141,7 @@ namespace OrhAuth.Services
         /// The refresh token is saved to the database for future token renewal operations.
         /// Note: The client's actual IP address should be used instead of a hardcoded value.
         /// </remarks>
-        public AccessToken CreateAccessToken(User user)
+        public AccessToken CreateAccessToken(User user, string createdByIp = "127.0.0.1")
         {
             var claims = GetClaims(user);
             var accessToken = _tokenHelper.CreateToken(user, claims);
@@ -151,7 +151,7 @@ namespace OrhAuth.Services
                 UserId = user.Id,
                 Token = accessToken.RefreshToken,
                 Expires = DateTime.Now.AddDays(7),
-                CreatedByIp = "127.0.0.1" // Gerçek projede istemcinin IP'sini almalısınız!!!
+                CreatedByIp = createdByIp // Gerçek projede istemcinin IP'sini almalısınız!!!
             };
             _refreshTokenRepository.Add(refreshToken);
 
@@ -174,7 +174,7 @@ namespace OrhAuth.Services
         /// Custom claims can be used to include additional contextual information such as department, role metadata, or location.
         /// Note: You should use the actual client IP address instead of the hardcoded "127.0.0.1".
         /// </remarks>
-        public AccessToken CreateAccessToken(User user, Dictionary<string, string> customClaims = null)
+        public AccessToken CreateAccessToken(User user, Dictionary<string, string> customClaims = null, string createdByIp = "127.0.0.1")
         {
             var claims = GetClaims(user);
 
@@ -195,7 +195,7 @@ namespace OrhAuth.Services
                 UserId = user.Id,
                 Token = accessToken.RefreshToken,
                 Expires = DateTime.Now.AddDays(7),
-                CreatedByIp = "127.0.0.1" // Gerçek projede istemcinin IP'sini almalısınız
+                CreatedByIp = createdByIp // Gerçek projede istemcinin IP'sini almalısınız
             };
 
             // Refresh token'ı kaydet
@@ -264,7 +264,7 @@ namespace OrhAuth.Services
         /// <exception cref="OrhAuthException">
         /// Thrown when the refresh token is invalid, expired, or the associated user is not found or inactive.
         /// </exception>
-        public AccessToken RefreshToken(string refreshToken)
+        public AccessToken RefreshToken(string refreshToken, string createdByIp = "127.0.0.1")
         {
             var token = _refreshTokenRepository.Get(rt => rt.Token == refreshToken && rt.RevokedDate == null);
             if (token == null)
@@ -299,7 +299,7 @@ namespace OrhAuth.Services
                 UserId = user.Id,
                 Token = accessToken.RefreshToken,
                 Expires = DateTime.Now.AddDays(7),
-                CreatedByIp = "127.0.0.1" // Gerçek projede istemcinin IP'sini almalısınız
+                CreatedByIp = createdByIp // Gerçek projede istemcinin IP'sini almalısınız
             };
             _refreshTokenRepository.Add(newRefreshToken);
 
@@ -321,7 +321,7 @@ namespace OrhAuth.Services
         /// <exception cref="OrhAuthException">
         /// Thrown when the refresh token is invalid, expired, or the associated user is not found or inactive.
         /// </exception>
-        public AccessToken RefreshToken(string refreshToken, Dictionary<string, string> customClaims = null)
+        public AccessToken RefreshToken(string refreshToken, Dictionary<string, string> customClaims = null, string createdByIp = "127.0.0.1")
         {
             var token = _refreshTokenRepository.Get(rt => rt.Token == refreshToken && rt.RevokedDate == null);
             if (token == null)
@@ -362,7 +362,7 @@ namespace OrhAuth.Services
                 UserId = user.Id,
                 Token = accessToken.RefreshToken,
                 Expires = DateTime.Now.AddDays(7),
-                CreatedByIp = "127.0.0.1" // Gerçek projede istemcinin IP'sini almalısınız
+                CreatedByIp = createdByIp // Gerçek projede istemcinin IP'sini almalısınız
             };
             _refreshTokenRepository.Add(newRefreshToken);
 
