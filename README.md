@@ -524,6 +524,7 @@ If any issue occurs, you can manually install them.
 
 OrhAuth adds the following references to your project:
 
+
 ```xml
 <Reference Include="EntityFramework" />
 <Reference Include="System.IdentityModel.Tokens.Jwt" />
@@ -2185,4 +2186,4 @@ These reference APIs form the backbone of authentication, authorization, and use
 ---
 
 
-
+  
