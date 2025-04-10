@@ -93,6 +93,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Attributes\AddToClaimAttribute.cs" />
     <Compile Include="Attributes\ExtendUserAttribute.cs" />
     <Compile Include="Configurations\AuthFrameworkInitializer.cs" />
     <Compile Include="Configurations\OrhAuthOptions.cs" />
@@ -104,11 +105,13 @@
     <Compile Include="Data\EntityConfigurations\UserOperationClaimConfiguration.cs" />
     <Compile Include="Data\Repositories\Abstract\IEntityRepository.cs" />
     <Compile Include="Data\Repositories\Concrete\EfEntityRepositoryBase.cs" />
+    <Compile Include="Exceptions\OrhAuthException.cs" />
     <Compile Include="Extensions\OrhAuthExtensions.cs" />
     <Compile Include="Middleware\OrhAuthMiddleware.cs" />
     <Compile Include="Models\Dtos\AccessToken.cs" />
     <Compile Include="Models\Dtos\UserForLoginDto.cs" />
     <Compile Include="Models\Dtos\UserForRegisterDto.cs" />
+    <Compile Include="Models\Dtos\UserOperationClaimDto.cs" />
     <Compile Include="Models\Entities\Base\EntityBase.cs" />
     <Compile Include="Models\Entities\OperationClaim.cs" />
     <Compile Include="Models\Entities\RefreshToken.cs" />
@@ -124,11 +127,7 @@
     <Compile Include="Services\AuthManager.cs" />
     <Compile Include="Services\IAuthService.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Constants\" />
-    <Folder Include="Data\Migrations\" />
-    <Folder Include="Helpers\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <None Include="App.config" />
     <None Include="OrhAuth.nuspec" />

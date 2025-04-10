@@ -1,4 +1,5 @@
-﻿using OrhAuth.Models.Entities;
+﻿using OrhAuth.Exceptions;
+using OrhAuth.Models.Entities;
 using System;
 using System.Data.Entity;
 using System.Data.Entity.ModelConfiguration;
@@ -7,22 +8,38 @@ using System.Reflection;
 
 namespace OrhAuth.Data.Context
 {
+    /// <summary>
+    /// Represents the Entity Framework DbContext for OrhAuth library. 
+    /// Manages database access, model configurations, and dynamic property registration for extended user entities.
+    /// </summary>
     public class AuthDbContext : DbContext
     {
-        // Statik değişken kaldırıldı, her OnModelCreating çağrısında genişletilmiş özellikleri ekleyeceğiz
+        /// <summary>
+        /// Lock object used to ensure thread-safe access to shared resources during model configuration and metadata caching.
+        /// </summary>
         private static readonly object _lockObject = new object();
 
+        /// <summary>
+        /// Initializes a new instance of the AuthDbContext using the default connection string defined in the config file.
+        /// </summary>
         public AuthDbContext() : base("name=AuthDbConnection")
         {
             Configuration.LazyLoadingEnabled = false;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the AuthDbContext using the provided connection string.
+        /// </summary>
+        /// <param name="connectionString">The connection string to the target database.</param>
         public AuthDbContext(string connectionString) : base(connectionString)
         {
             Configuration.LazyLoadingEnabled = false;
         }
 
-        // DbContext'in statik yapıcısında bu işlemi yap
+        /// <summary>
+        /// Static constructor to configure the database initializer. 
+        /// Ensures that the database is automatically created if it does not already exist.
+        /// </summary>
         static AuthDbContext()
         {
             Database.SetInitializer(new CreateDatabaseIfNotExists<AuthDbContext>());
@@ -33,9 +50,13 @@ namespace OrhAuth.Data.Context
         public DbSet<UserOperationClaim> UserOperationClaims { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
 
+        /// <summary>
+        /// Configures the model by registering all EntityTypeConfiguration classes in the assembly
+        /// and applying dynamic property configurations for extended user models.
+        /// </summary>
+        /// <param name="modelBuilder">The model builder instance used for configuring the model.</param>
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
-            // Assembly içindeki tüm EntityTypeConfiguration sınıflarını otomatik olarak kaydet
             var typesToRegister = Assembly.GetExecutingAssembly().GetTypes()
                 .Where(type => !string.IsNullOrEmpty(type.Namespace) &&
                        type.BaseType != null &&
@@ -48,19 +69,24 @@ namespace OrhAuth.Data.Context
                 modelBuilder.Configurations.Add(configurationInstance);
             }
 
-            // Dinamik alanları eklemek için mevcut mekanizmayı kullan
             try
             {
                 RegisterExtendedProperties(modelBuilder);
             }
             catch (Exception ex)
             {
-                // Hata durumunu düzgün şekilde logla
+                throw new OrhAuthException("An error occurred while registering extended properties in the model builder.", ex);
             }
 
             base.OnModelCreating(modelBuilder);
         }
 
+        /// <summary>
+        /// Registers and configures extended user properties dynamically using reflection and expression trees.
+        /// Properties must be decorated with the ExtendUserAttribute.
+        /// </summary>
+        /// <param name="modelBuilder">The model builder instance used for dynamic configuration.</param>
+        /// <exception cref="InvalidOperationException">Thrown if a property cannot be configured dynamically.</exception>
         private void RegisterExtendedProperties(DbModelBuilder modelBuilder)
         {
             try
@@ -70,13 +96,11 @@ namespace OrhAuth.Data.Context
 
                 if (extendedProperties.Count == 0)
                 {
-                    System.Diagnostics.Debug.WriteLine("Genişletilmiş özellik bulunamadı!");
-                    return;
+                    throw new OrhAuthException("No extended properties found on the extended User type. Please ensure that properties are decorated with [ExtendUser].");
                 }
 
                 System.Diagnostics.Debug.WriteLine($"Bulunan genişletilmiş özellik sayısı: {extendedProperties.Count}");
 
-                // Entity type builder'ı al
                 var entityTypeConfiguration = modelBuilder.Entity<User>();
 
                 foreach (var metadata in extendedProperties)
@@ -86,16 +110,13 @@ namespace OrhAuth.Data.Context
 
                     try
                     {
-                        // Bu yöntemle dinamik property'leri konfigüre edebiliriz
                         string propertyName = property.Name;
                         System.Diagnostics.Debug.WriteLine($"İşleniyor: {propertyName}, Tip: {property.PropertyType.Name}");
 
-                        // EF6'da dinamik property yapılandırması için expression kullanılmalı
                         var parameterExp = System.Linq.Expressions.Expression.Parameter(typeof(User), "e");
                         var propertyExp = System.Linq.Expressions.Expression.Property(parameterExp, propertyName);
                         var lambdaExp = System.Linq.Expressions.Expression.Lambda(propertyExp, parameterExp);
 
-                        // Property metodunu bul
                         var propertyMethod = typeof(EntityTypeConfiguration<User>)
                             .GetMethods()
                             .Where(m => m.Name == "Property" && m.IsGenericMethod)
@@ -106,14 +127,11 @@ namespace OrhAuth.Data.Context
                             throw new InvalidOperationException("Property metodu bulunamadı!");
                         }
 
-                        // Generic method'u özellik tipi ile çağır
                         var genericMethod = propertyMethod.MakeGenericMethod(property.PropertyType);
                         var propertyConfiguration = genericMethod.Invoke(entityTypeConfiguration, new object[] { lambdaExp });
 
-                        // Dönüş tipi StringPropertyConfiguration, DecimalPropertyConfiguration, vs. olabilir
                         var configType = propertyConfiguration.GetType();
 
-                        // MaxLength yapılandırması
                         if (attribute.MaxLength > 0 && property.PropertyType == typeof(string))
                         {
                             var hasMaxLengthMethod = configType.GetMethod("HasMaxLength", new[] { typeof(int) });
@@ -128,7 +146,6 @@ namespace OrhAuth.Data.Context
                             }
                         }
 
-                        // IsRequired yapılandırması
                         if (attribute.IsRequired)
                         {
                             var isRequiredMethod = configType.GetMethod("IsRequired");
@@ -156,7 +173,6 @@ namespace OrhAuth.Data.Context
                             }
                         }
 
-                        // DbType yapılandırması
                         if (!string.IsNullOrEmpty(attribute.DbType))
                         {
                             var columnTypeMethod = configType.GetMethod("HasColumnType", new[] { typeof(string) });
@@ -171,27 +187,23 @@ namespace OrhAuth.Data.Context
                             }
                         }
 
-                        // Index oluşturma - ayrı bir işlem olarak yapılır
                         if (attribute.IsUnique)
                         {
-                            // EF6'da index oluşturma için fluent API kullanmak daha karmaşık, 
-                            // bunun yerine basitleştirilmiş bir yaklaşım kullanalım:
                             System.Diagnostics.Debug.WriteLine($"  Unique property: {propertyName} - Migration veya SQL ile unique index oluşturulmalıdır.");
                         }
 
-                        // Loglama
+                        // Log
                         System.Diagnostics.Debug.WriteLine($"Eklendi: {property.Name} (MaxLength: {attribute.MaxLength}, Required: {attribute.IsRequired}, Unique: {attribute.IsUnique})");
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Özellik eklenirken hata: {property.Name} - {ex.Message}");
+                        throw new OrhAuthException($"An error occurred while adding extended property '{property.Name}': {ex.Message}", ex);
                     }
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"RegisterExtendedProperties genel hatası: {ex.Message}");
-                throw;
+                throw new OrhAuthException($"An error occurred while registering extended user properties: {ex.Message}", ex);
             }
         }
     }

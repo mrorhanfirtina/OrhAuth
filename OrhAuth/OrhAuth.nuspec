@@ -2,17 +2,17 @@
 <package >
   <metadata>
     <id>OrhAuth</id>
-    <version>1.0.12</version>
+    <version>1.1.1</version>
     <authors>Orhan Fırtına</authors>
     <owners>OrhSoft</owners>
-    <description>JWT tabanlı kimlik doğrulama ve yetkilendirme kütüphanesi</description>
+    <description>JWT-based authentication and authorization library.</description>
     <tags>authentication authorization jwt token security owin identity</tags>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <!--<projectUrl>https://github.com/orhanf/orhauth</projectUrl>-->
     <icon>Images/logo.png</icon>
-    <releaseNotes>İlk sürüm</releaseNotes>
+    <releaseNotes>Updated</releaseNotes>
     <readme>README.md</readme>
-    <copyright>Copyright 2023</copyright>
+    <copyright>Copyright 2025</copyright>
     <dependencies>
       <dependency id="EntityFramework" version="6.4.4" />
       <dependency id="System.IdentityModel.Tokens.Jwt" version="5.3.0" />

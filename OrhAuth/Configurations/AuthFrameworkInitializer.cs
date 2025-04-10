@@ -1,21 +1,35 @@
-﻿using OrhAuth.Attributes;
+﻿
+using OrhAuth.Attributes;
 using OrhAuth.Data.Context;
 using OrhAuth.Data.Repositories.Concrete;
+using OrhAuth.Exceptions;
 using OrhAuth.Models.Entities;
+using OrhAuth.Security.Hashing;
 using OrhAuth.Security.JWT;
 using OrhAuth.Services;
 using System;
+using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
-using System.Reflection;
 
 namespace OrhAuth.Configurations
 {
+    /// <summary>
+    /// Provides startup utilities for initializing the OrhAuth framework.
+    /// This includes database creation, extended user column registration, schema updates, and service instantiation.
+    /// </summary>
     public static class AuthFrameworkInitializer
     {
+        /// <summary>
+        /// Initializes the OrhAuth framework by creating the database (if necessary),
+        /// registering the extended user model, and applying schema modifications.
+        /// </summary>
+        /// <param name="connectionString">The database connection string.</param>
+        /// <param name="createDatabaseIfNotExists">Specifies whether to create the database if it does not exist.</param>
+        /// <param name="extendedUserType">The extended user type to apply custom fields to the schema.</param>
         public static void Initialize(string connectionString, bool createDatabaseIfNotExists = true, System.Type extendedUserType = null)
         {
-            // Önce tip kaydını yap
             if (extendedUserType != null)
             {
                 SchemaMetadataCache.RegisterExtendedType(extendedUserType);
@@ -23,19 +37,16 @@ namespace OrhAuth.Configurations
 
             using (var context = new AuthDbContext(connectionString))
             {
-                // Veritabanı yoksa ve oluşturma flag'i true ise oluştur
                 if (!context.Database.Exists() && createDatabaseIfNotExists)
                 {
                     context.Database.Create();
                     SeedInitialData(context);
 
-                    // Genişletilmiş alanları ekle
                     if (extendedUserType != null)
                     {
                         AddExtendedColumnsWithSQL(context, extendedUserType);
                     }
                 }
-                // Veritabanı varsa ve genişletilmiş tip tanımlanmışsa, sütunları ekle
                 else if (context.Database.Exists() && extendedUserType != null)
                 {
                     AddExtendedColumnsWithSQL(context, extendedUserType);
@@ -43,6 +54,9 @@ namespace OrhAuth.Configurations
             }
         }
 
+        /// <summary>
+        /// Adds extended user properties as SQL columns in the Users table based on the provided user type.
+        /// </summary>
         private static void AddExtendedColumnsWithSQL(AuthDbContext context, Type extendedUserType)
         {
             try
@@ -52,163 +66,120 @@ namespace OrhAuth.Configurations
                     .ToList();
 
                 if (properties.Count == 0)
-                {
-                    System.Diagnostics.Debug.WriteLine("Genişletilmiş özellik bulunamadı, SQL ile kolon eklenmiyor.");
                     return;
-                }
 
-                System.Diagnostics.Debug.WriteLine($"SQL ile eklenecek kolon sayısı: {properties.Count}");
-
-                using (var connection = context.Database.Connection)
+                var existingColumns = new List<string>();
+                using (var command = context.Database.Connection.CreateCommand())
                 {
-                    if (connection.State != ConnectionState.Open)
-                        connection.Open();
-
-                    using (var command = connection.CreateCommand())
+                    command.CommandText = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Users'";
+                    context.Database.Connection.Open();
+                    using (var reader = command.ExecuteReader())
                     {
-                        foreach (var prop in properties)
+                        while (reader.Read())
                         {
-                            var attribute = (ExtendUserAttribute)prop.GetCustomAttribute(typeof(ExtendUserAttribute));
-                            string sqlType = GetSqlDataType(prop.PropertyType, attribute);
-
-                            // DEFAULT değer kısmını oluştur
-                            string defaultValueClause = "";
-                            if (!string.IsNullOrEmpty(attribute.DefaultValue))
-                            {
-                                if (prop.PropertyType == typeof(string))
-                                    defaultValueClause = $" DEFAULT '{attribute.DefaultValue}'";
-                                else if (prop.PropertyType == typeof(int) || prop.PropertyType == typeof(decimal) ||
-                                        prop.PropertyType == typeof(float) || prop.PropertyType == typeof(double))
-                                    defaultValueClause = $" DEFAULT {attribute.DefaultValue}";
-                                else if (prop.PropertyType == typeof(bool))
-                                    defaultValueClause = $" DEFAULT {(attribute.DefaultValue.ToLower() == "true" ? "1" : "0")}";
-                                else if (prop.PropertyType == typeof(DateTime))
-                                    defaultValueClause = $" DEFAULT '{attribute.DefaultValue}'";
-                                else if (prop.PropertyType == typeof(Guid))
-                                    defaultValueClause = $" DEFAULT '{attribute.DefaultValue}'";
-                            }
-
-                            // NOT NULL kısıtı sadece DEFAULT değer varsa veya NULL izin veriliyorsa eklenebilir
-                            string nullableSuffix = attribute.IsRequired && !string.IsNullOrEmpty(attribute.DefaultValue) ?
-                                                  " NOT NULL" : " NULL";
-
-                            // Kolon veritabanında var mı diye kontrol ederek ekle
-                            string alterSql = $"IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Users]') AND name = '{prop.Name}') " +
-                                             $"ALTER TABLE [dbo].[Users] ADD [{prop.Name}] {sqlType}{defaultValueClause}{nullableSuffix}";
-
-                            command.CommandText = alterSql;
-                            command.ExecuteNonQuery();
-
-                            System.Diagnostics.Debug.WriteLine($"SQL ile eklendi: {prop.Name} (Type: {sqlType}{defaultValueClause}{nullableSuffix})");
-
-                            // Eğer required alan eklenmiş ve default değeri yoksa, mevcut kayıtları güncelle
-                            if (attribute.IsRequired && string.IsNullOrEmpty(attribute.DefaultValue) &&
-                                (prop.PropertyType == typeof(string) || prop.PropertyType == typeof(int)))
-                            {
-                                string updateValue = prop.PropertyType == typeof(string) ? "''" : "0";
-                                string updateSql = $"UPDATE [dbo].[Users] SET [{prop.Name}] = {updateValue} WHERE [{prop.Name}] IS NULL";
-                                command.CommandText = updateSql;
-                                command.ExecuteNonQuery();
-
-                                // Şimdi NOT NULL olarak değiştir
-                                string alterColumnSql = $"ALTER TABLE [dbo].[Users] ALTER COLUMN [{prop.Name}] {sqlType} NOT NULL";
-                                command.CommandText = alterColumnSql;
-                                command.ExecuteNonQuery();
-
-                                System.Diagnostics.Debug.WriteLine($"SQL ile NOT NULL yapıldı: {prop.Name}");
-                            }
-
-                            // Eğer Unique kısıtı varsa index ekle
-                            if (attribute.IsUnique)
-                            {
-                                string indexName = $"IX_Users_{prop.Name}_Unique";
-                                string indexSql = $"IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = '{indexName}' AND object_id = OBJECT_ID(N'[dbo].[Users]')) " +
-                                                 $"CREATE UNIQUE NONCLUSTERED INDEX [{indexName}] ON [dbo].[Users] ([{prop.Name}]) WHERE [{prop.Name}] IS NOT NULL";
-
-                                command.CommandText = indexSql;
-                                command.ExecuteNonQuery();
-
-                                System.Diagnostics.Debug.WriteLine($"SQL ile unique index eklendi: {indexName}");
-                            }
+                            existingColumns.Add(reader.GetString(0));
                         }
                     }
+                    context.Database.Connection.Close();
+                }
+
+                foreach (var property in properties)
+                {
+                    string columnName = property.Name;
+
+                    if (existingColumns.Contains(columnName, StringComparer.OrdinalIgnoreCase))
+                        continue;
+
+                    string sqlType = GetSqlType(property.PropertyType);
+
+                    string alterTableSql = $"ALTER TABLE Users ADD {columnName} {sqlType} NULL";
+
+                    context.Database.ExecuteSqlCommand(alterTableSql);
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"SQL ile kolon eklenirken hata: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"Hata detayı: {ex.StackTrace}");
-                throw; // Hatayı yukarı fırlat ki kullanıcı görebilsin
+                throw new OrhAuthException($"Extended column creation failed for type {extendedUserType?.Name}: {ex.Message}", ex);
             }
         }
 
-        private static string GetSqlDataType(Type propType, ExtendUserAttribute attribute)
+        /// <summary>
+        /// Maps a C# property type to a corresponding SQL Server column type.
+        /// </summary>
+        private static string GetSqlType(Type type)
         {
-            if (!string.IsNullOrEmpty(attribute.DbType))
-                return attribute.DbType;
-
-            if (propType == typeof(string))
-                return attribute.MaxLength > 0
-                            ? $"nvarchar({attribute.MaxLength})"
-                            : "nvarchar(max)";
-            else if (propType == typeof(int) || propType == typeof(int?))
-                return "int";
-            else if (propType == typeof(decimal) || propType == typeof(decimal?))
-                return "decimal(18,2)";
-            else if (propType == typeof(DateTime) || propType == typeof(DateTime?))
-                return "datetime2";
-            else if (propType == typeof(bool) || propType == typeof(bool?))
-                return "bit";
-            else if (propType == typeof(Guid) || propType == typeof(Guid?))
-                return "uniqueidentifier";
-            else if (propType == typeof(byte[]))
-                return "varbinary(max)";
-            else if (propType == typeof(float) || propType == typeof(float?))
-                return "float";
-            else if (propType == typeof(double) || propType == typeof(double?))
-                return "float";
+            if (type == typeof(string))
+                return "NVARCHAR(MAX)";
+            else if (type == typeof(int) || type == typeof(int?))
+                return "INT";
+            else if (type == typeof(long) || type == typeof(long?))
+                return "BIGINT";
+            else if (type == typeof(decimal) || type == typeof(decimal?))
+                return "DECIMAL(18, 2)";
+            else if (type == typeof(double) || type == typeof(double?))
+                return "FLOAT";
+            else if (type == typeof(DateTime) || type == typeof(DateTime?))
+                return "DATETIME";
+            else if (type == typeof(bool) || type == typeof(bool?))
+                return "BIT";
+            else if (type == typeof(Guid) || type == typeof(Guid?))
+                return "UNIQUEIDENTIFIER";
+            else if (type == typeof(byte[]))
+                return "VARBINARY(MAX)";
             else
-                return "nvarchar(max)";
+                return "NVARCHAR(MAX)";
         }
 
+
+        /// <summary>
+        /// Seeds initial data such as the default admin role and admin user into the database.
+        /// </summary>
         private static void SeedInitialData(AuthDbContext context)
         {
-            // Admin rolünü ekle
-            var adminRole = new OperationClaim { Name = "Admin" };
-            context.OperationClaims.Add(adminRole);
-
-            // Kullanıcı rolünü ekle
-            var userRole = new OperationClaim { Name = "User" };
-            context.OperationClaims.Add(userRole);
-
-            context.SaveChanges();
-
-            // Admin kullanıcısını oluştur
-            byte[] passwordHash, passwordSalt;
-            Security.Hashing.HashingHelper.CreatePasswordHash("Admin123!", out passwordHash, out passwordSalt);
-
-            var adminUser = new User
+            try
             {
-                Email = "admin@example.com",
-                FirstName = "Admin",
-                LastName = "User",
-                PasswordHash = passwordHash,
-                PasswordSalt = passwordSalt,
-                IsActive = true
-            };
+                var adminRole = new OperationClaim { Name = "admin" };
+                context.OperationClaims.Add(adminRole);
+                context.SaveChanges();
 
-            context.Users.Add(adminUser);
-            context.SaveChanges();
+                byte[] passwordHash, passwordSalt;
+                HashingHelper.CreatePasswordHash("Admin123!", out passwordHash, out passwordSalt);
 
-            // Admin rolü bağlantısını ekle
-            context.UserOperationClaims.Add(new UserOperationClaim
+                var adminUser = new User
+                {
+                    Email = "admin@example.com",
+                    FirstName = "Admin",
+                    LastName = "User",
+                    PasswordHash = passwordHash,
+                    PasswordSalt = passwordSalt,
+                    IsActive = true
+                };
+                context.Users.Add(adminUser);
+                context.SaveChanges();
+
+                var userRole = new UserOperationClaim
+                {
+                    UserId = adminUser.Id,
+                    OperationClaimId = adminRole.Id
+                };
+                context.UserOperationClaims.Add(userRole);
+                context.SaveChanges();
+            }
+            catch (Exception ex)
             {
-                UserId = adminUser.Id,
-                OperationClaimId = adminRole.Id
-            });
-
-            context.SaveChanges();
+                throw new OrhAuthException("Failed to seed initial data to the database.", ex);
+            }
         }
+
+
+
+        /// <summary>
+        /// Creates and returns an instance of <see cref="IAuthService"/> with the provided configuration options.
+        /// Initializes all necessary repositories, the JWT token helper, and the AuthManager.
+        /// </summary>
+        /// <param name="connectionString">The database connection string to be used by the repositories.</param>
+        /// <param name="options">An <see cref="OrhAuthOptions"/> object that contains token and user settings.</param>
+        /// <returns>An initialized implementation of <see cref="IAuthService"/> ready to be used in authentication flows.</returns>
 
         public static IAuthService CreateAuthService(string connectionString, OrhAuthOptions options)
         {
@@ -221,31 +192,110 @@ namespace OrhAuth.Configurations
                 RefreshTokenTTL = options.RefreshTokenTTLDays
             };
 
-            // Repository ve service oluşturma
             var context = new AuthDbContext(connectionString);
 
-            // Generic repository base kullanarak repository'leri oluştur
             var userRepository = new EfEntityRepositoryBase<User>(context);
             var operationClaimRepository = new EfEntityRepositoryBase<OperationClaim>(context);
             var userOperationClaimRepository = new EfEntityRepositoryBase<UserOperationClaim>(context);
             var refreshTokenRepository = new EfEntityRepositoryBase<RefreshToken>(context);
 
-            // TokenHelper'ı oluştur
             var tokenHelper = new JwtHelper(
-                tokenOptions.SecurityKey,
-                tokenOptions.Issuer,
-                tokenOptions.Audience,
-                tokenOptions.AccessTokenExpiration);
+                options.TokenSecurityKey,
+                options.TokenIssuer,
+                options.TokenAudience,
+                options.TokenExpirationMinutes);
 
-            // AuthService'i oluştur
-            var authService = new AuthManager(
+            return new AuthManager(
                 userRepository,
                 operationClaimRepository,
                 userOperationClaimRepository,
                 refreshTokenRepository,
-                tokenHelper);
+                tokenHelper,
+                connectionString);
+        }
 
-            return authService;
+
+        /// <summary>
+        /// Tests whether a connection to the database can be successfully established using the given connection string.
+        /// </summary>
+        /// <param name="connectionString">The connection string used to attempt the database connection.</param>
+        /// <returns>
+        /// <c>true</c> if the connection to the database is successful; otherwise, <c>false</c>.
+        /// </returns>
+        public static bool TestDatabaseConnection(string connectionString)
+        {
+            try
+            {
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    return true;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Updates the database schema by adding new columns to the <c>Users</c> table
+        /// based on the provided extended user type.
+        /// </summary>
+        /// <param name="connectionString">The database connection string.</param>
+        /// <param name="extendedUserType">
+        /// The extended user class type that contains additional properties decorated with <see cref="ExtendUserAttribute"/>.
+        /// </param>
+        /// <remarks>
+        /// This method checks whether the database exists and, if so, adds the extended user fields as new columns.
+        /// If <paramref name="extendedUserType"/> is <c>null</c>, the method exits without performing any operation.
+        /// </remarks>
+        public static void UpdateDatabaseSchema(string connectionString, Type extendedUserType)
+        {
+            if (extendedUserType == null)
+                return;
+
+            using (var context = new AuthDbContext(connectionString))
+            {
+                if (context.Database.Exists())
+                {
+                    AddExtendedColumnsWithSQL(context, extendedUserType);
+                }
+            }
+        }
+
+
+
+        /// <summary>
+        /// Completely resets the database by deleting and recreating it,
+        /// including initial data and any extended user schema if specified.
+        /// </summary>
+        /// <param name="connectionString">The connection string used to connect to the database.</param>
+        /// <param name="extendedUserType">
+        /// (Optional) A type that extends the <c>User</c> entity with additional properties.
+        /// If provided, new columns defined by <see cref="ExtendUserAttribute"/> will be added to the <c>Users</c> table.
+        /// </param>
+        /// <remarks>
+        /// This method should only be used in development or testing environments.
+        /// It deletes all existing data in the database and resets it to the initial OrhAuth schema.
+        /// </remarks>
+        public static void ResetDatabase(string connectionString, Type extendedUserType = null)
+        {
+            using (var context = new AuthDbContext(connectionString))
+            {
+                if (context.Database.Exists())
+                {
+                    context.Database.Delete();
+                }
+
+                context.Database.Create();
+                SeedInitialData(context);
+
+                if (extendedUserType != null)
+                {
+                    AddExtendedColumnsWithSQL(context, extendedUserType);
+                }
+            }
         }
     }
 }

@@ -3,20 +3,27 @@ using System.Data.Entity.ModelConfiguration;
 
 namespace OrhAuth.Data.EntityConfigurations
 {
+    /// <summary>
+    /// Entity Framework configuration for the RefreshToken entity.
+    /// Defines table schema, property constraints, indexes, and relationships.
+    /// </summary>
     public class RefreshTokenConfiguration : EntityTypeConfiguration<RefreshToken>
     {
+        /// <summary>
+        /// Initializes the RefreshToken entity configuration.
+        /// </summary>
         public RefreshTokenConfiguration()
         {
-            // Primary Key
+            // Configure the primary key
             HasKey(rt => rt.Id);
 
-            // Tablo adı
+            // Set the table name
             ToTable("RefreshTokens");
 
-            // Özellikler
+            // Configure properties
             Property(rt => rt.Token)
                 .IsRequired()
-                .HasMaxLength(500); // Token uzunluğu için yeterli
+                .HasMaxLength(500); // Sufficient length for token storage
 
             Property(rt => rt.Expires)
                 .IsRequired();
@@ -35,18 +42,18 @@ namespace OrhAuth.Data.EntityConfigurations
                 .HasMaxLength(500)
                 .IsOptional();
 
-            // İlişkiler
+            // Configure relationships
             HasRequired(rt => rt.User)
                 .WithMany(u => u.RefreshTokens)
                 .HasForeignKey(rt => rt.UserId)
-                .WillCascadeOnDelete(true); // Kullanıcı silindiğinde, refresh token'ları da silinsin
+                .WillCascadeOnDelete(true); // Cascade delete when the user is deleted
 
-            // Token için indeks - doğrulama sırasında hızlı erişim için
+            // Create a unique index on the Token property for quick validation
             HasIndex(rt => rt.Token)
                 .IsUnique(true)
                 .HasName("IX_RefreshToken_Token");
 
-            // UserId ve Expires için bileşik indeks - aktif token'ları sorgularken performans için
+            // Create a composite index on UserId and Expires for performance
             HasIndex(rt => new { rt.UserId, rt.Expires })
                 .HasName("IX_RefreshToken_UserIdExpires");
         }
