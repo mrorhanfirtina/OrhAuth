@@ -1189,7 +1189,7 @@ namespace OrhAuth.Services
         /// </returns>
         public dynamic GetUserDynamicByFilter(Expression<Func<User, bool>> filter)
         {
-            using (var context = new AuthDbContext(_connectionString))
+            using (var context = new AuthDbContext<User>(_connectionString))
             {
                 var user = context.Users.AsNoTracking().FirstOrDefault(filter);
                 if (user == null)
@@ -1273,7 +1273,7 @@ namespace OrhAuth.Services
         /// </returns>
         public List<dynamic> GetUsersDynamicByFilter(Expression<Func<User, bool>> filter)
         {
-            using (var context = new AuthDbContext(_connectionString))
+            using (var context = new AuthDbContext<User>(_connectionString))
             {
                 var users = context.Users.AsNoTracking().Where(filter).ToList();
 

@@ -1,5 +1,4 @@
-﻿using OrhAuth.Data.Context;
-using OrhAuth.Data.Repositories.Abstract;
+﻿using OrhAuth.Data.Repositories.Abstract;
 using OrhAuth.Models.Entities.Base;
 using System.Collections.Generic;
 using System.Data.Entity;
@@ -11,21 +10,31 @@ namespace OrhAuth.Data.Repositories.Concrete
 {
     /// <summary>
     /// Entity Framework-based implementation of the IEntityRepository interface.
-    /// Provides generic CRUD operations for entities using AuthDbContext.
+    /// Provides generic CRUD operations for entities using DbContext.
     /// </summary>
     /// <typeparam name="TEntity">The type of the entity, which must inherit from EntityBase.</typeparam>
     public class EfEntityRepositoryBase<TEntity> : IEntityRepository<TEntity>
         where TEntity : EntityBase
     {
-        private readonly AuthDbContext _context;
+        private readonly DbContext _context;
 
         /// <summary>
         /// Initializes a new instance of the repository with the specified database context.
         /// </summary>
-        /// <param name="context">The AuthDbContext to be used for data access operations.</param>
-        public EfEntityRepositoryBase(AuthDbContext context)
+        /// <param name="context">The DbContext to be used for data access operations.</param>
+        public EfEntityRepositoryBase(DbContext context)
         {
             _context = context;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the repository with the specified connection string.
+        /// Creates a new AuthDbContext<User> instance internally.
+        /// </summary>
+        /// <param name="connectionString">The database connection string.</param>
+        public EfEntityRepositoryBase(string connectionString)
+        {
+            _context = new OrhAuth.Data.Context.AuthDbContext<OrhAuth.Models.Entities.User>(connectionString);
         }
 
         /// <summary>

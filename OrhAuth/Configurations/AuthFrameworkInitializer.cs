@@ -1,5 +1,4 @@
-﻿
-using OrhAuth.Attributes;
+﻿using OrhAuth.Attributes;
 using OrhAuth.Data.Context;
 using OrhAuth.Data.Repositories.Concrete;
 using OrhAuth.Exceptions;
@@ -12,6 +11,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Data.Entity;
 
 namespace OrhAuth.Configurations
 {
@@ -28,24 +28,21 @@ namespace OrhAuth.Configurations
         /// <param name="connectionString">The database connection string.</param>
         /// <param name="createDatabaseIfNotExists">Specifies whether to create the database if it does not exist.</param>
         /// <param name="extendedUserType">The extended user type to apply custom fields to the schema.</param>
-        public static void Initialize(string connectionString, bool createDatabaseIfNotExists = true, System.Type extendedUserType = null)
+        public static void Initialize(string connectionString, bool createDatabaseIfNotExists = true, Type extendedUserType = null)
         {
             if (extendedUserType != null)
-            {
                 SchemaMetadataCache.RegisterExtendedType(extendedUserType);
-            }
 
-            using (var context = new AuthDbContext(connectionString))
+            Type dbContextType = typeof(AuthDbContext<>).MakeGenericType(extendedUserType ?? typeof(User));
+            using (var context = (DbContext)Activator.CreateInstance(dbContextType, connectionString))
             {
                 if (!context.Database.Exists() && createDatabaseIfNotExists)
                 {
                     context.Database.Create();
-                    SeedInitialData(context);
+                    SeedInitialData(context, extendedUserType);
 
                     if (extendedUserType != null)
-                    {
                         AddExtendedColumnsWithSQL(context, extendedUserType);
-                    }
                 }
                 else if (context.Database.Exists() && extendedUserType != null)
                 {
@@ -57,7 +54,7 @@ namespace OrhAuth.Configurations
         /// <summary>
         /// Adds extended user properties as SQL columns in the Users table based on the provided user type.
         /// </summary>
-        private static void AddExtendedColumnsWithSQL(AuthDbContext context, Type extendedUserType)
+        private static void AddExtendedColumnsWithSQL(DbContext context, Type extendedUserType)
         {
             try
             {
@@ -130,31 +127,33 @@ namespace OrhAuth.Configurations
                 return "NVARCHAR(MAX)";
         }
 
-
         /// <summary>
         /// Seeds initial data such as the default admin role and admin user into the database.
         /// </summary>
-        private static void SeedInitialData(AuthDbContext context)
+        private static void SeedInitialData(DbContext context, Type extendedUserType)
         {
             try
             {
                 var adminRole = new OperationClaim { Name = "admin" };
-                context.OperationClaims.Add(adminRole);
+                context.Set<OperationClaim>().Add(adminRole);
                 context.SaveChanges();
 
                 byte[] passwordHash, passwordSalt;
                 HashingHelper.CreatePasswordHash("Admin123!", out passwordHash, out passwordSalt);
 
-                var adminUser = new User
-                {
-                    Email = "admin@example.com",
-                    FirstName = "Admin",
-                    LastName = "User",
-                    PasswordHash = passwordHash,
-                    PasswordSalt = passwordSalt,
-                    IsActive = true
-                };
-                context.Users.Add(adminUser);
+                // Create user instance dynamically based on the extended user type
+                var userType = extendedUserType ?? typeof(User);
+                dynamic adminUser = Activator.CreateInstance(userType);
+                adminUser.Email = "admin@example.com";
+                adminUser.FirstName = "Admin";
+                adminUser.LastName = "User";
+                adminUser.PasswordHash = passwordHash;
+                adminUser.PasswordSalt = passwordSalt;
+                adminUser.IsActive = true;
+
+                var usersProp = context.GetType().GetProperty("Users");
+                dynamic usersSet = usersProp.GetValue(context, null);
+                usersSet.Add(adminUser);
                 context.SaveChanges();
 
                 var userRole = new UserOperationClaim
@@ -162,7 +161,7 @@ namespace OrhAuth.Configurations
                     UserId = adminUser.Id,
                     OperationClaimId = adminRole.Id
                 };
-                context.UserOperationClaims.Add(userRole);
+                context.Set<UserOperationClaim>().Add(userRole);
                 context.SaveChanges();
             }
             catch (Exception ex)
@@ -171,8 +170,6 @@ namespace OrhAuth.Configurations
             }
         }
 
-
-
         /// <summary>
         /// Creates and returns an instance of <see cref="IAuthService"/> with the provided configuration options.
         /// Initializes all necessary repositories, the JWT token helper, and the AuthManager.
@@ -180,19 +177,11 @@ namespace OrhAuth.Configurations
         /// <param name="connectionString">The database connection string to be used by the repositories.</param>
         /// <param name="options">An <see cref="OrhAuthOptions"/> object that contains token and user settings.</param>
         /// <returns>An initialized implementation of <see cref="IAuthService"/> ready to be used in authentication flows.</returns>
-
         public static IAuthService CreateAuthService(string connectionString, OrhAuthOptions options)
         {
-            var tokenOptions = new TokenOptions
-            {
-                Audience = options.TokenAudience,
-                Issuer = options.TokenIssuer,
-                AccessTokenExpiration = options.TokenExpirationMinutes,
-                SecurityKey = options.TokenSecurityKey,
-                RefreshTokenTTL = options.RefreshTokenTTLDays
-            };
-
-            var context = new AuthDbContext(connectionString);
+            var userType = options.ExtendedUserType ?? typeof(User);
+            Type dbContextType = typeof(AuthDbContext<>).MakeGenericType(userType);
+            var context = (DbContext)Activator.CreateInstance(dbContextType, connectionString);
 
             var userRepository = new EfEntityRepositoryBase<User>(context);
             var operationClaimRepository = new EfEntityRepositoryBase<OperationClaim>(context);
@@ -213,7 +202,6 @@ namespace OrhAuth.Configurations
                 tokenHelper,
                 connectionString);
         }
-
 
         /// <summary>
         /// Tests whether a connection to the database can be successfully established using the given connection string.
@@ -255,7 +243,8 @@ namespace OrhAuth.Configurations
             if (extendedUserType == null)
                 return;
 
-            using (var context = new AuthDbContext(connectionString))
+            Type dbContextType = typeof(AuthDbContext<>).MakeGenericType(extendedUserType);
+            using (var context = (DbContext)Activator.CreateInstance(dbContextType, connectionString))
             {
                 if (context.Database.Exists())
                 {
@@ -263,8 +252,6 @@ namespace OrhAuth.Configurations
                 }
             }
         }
-
-
 
         /// <summary>
         /// Completely resets the database by deleting and recreating it,
@@ -281,7 +268,8 @@ namespace OrhAuth.Configurations
         /// </remarks>
         public static void ResetDatabase(string connectionString, Type extendedUserType = null)
         {
-            using (var context = new AuthDbContext(connectionString))
+            Type dbContextType = typeof(AuthDbContext<>).MakeGenericType(extendedUserType ?? typeof(User));
+            using (var context = (DbContext)Activator.CreateInstance(dbContextType, connectionString))
             {
                 if (context.Database.Exists())
                 {
@@ -289,7 +277,7 @@ namespace OrhAuth.Configurations
                 }
 
                 context.Database.Create();
-                SeedInitialData(context);
+                SeedInitialData(context, extendedUserType);
 
                 if (extendedUserType != null)
                 {

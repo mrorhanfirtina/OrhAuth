@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>OrhAuth</id>
-    <version>1.1.1</version>
+    <version>1.1.3</version>
     <authors>Orhan Fırtına</authors>
     <owners>OrhSoft</owners>
     <description>JWT-based authentication and authorization library.</description>
