@@ -221,7 +221,7 @@ namespace OrhAuth.Services
         /// <summary>
         /// Retrieves a user as a dynamic object by login identifier (username/email).
         /// </summary>
-        dynamic GetUserDynamicByLogin(string login);
+        dynamic GetUserDynamicByValue(string customField, string customValue);
 
         /// <summary>
         /// Retrieves a single user as a dynamic object using a LINQ filter expression.

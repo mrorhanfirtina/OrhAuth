@@ -1162,15 +1162,16 @@ namespace OrhAuth.Services
         /// </summary>
         /// <param name="login">The custom login value (e.g., LVUserLogin).</param>
         /// <returns>A dynamic user object including extended fields, or null if not found.</returns>
-        public dynamic GetUserDynamicByLogin(string login)
+        public dynamic GetUserDynamicByValue(string customField, string customValue)
         {
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
 
-                using (var command = new SqlCommand("SELECT * FROM Users WHERE LVUserLogin = @Login", connection))
+                using (var command = new SqlCommand("SELECT * FROM Users WHERE @Field = @Value", connection))
                 {
-                    command.Parameters.AddWithValue("@Login", login);
+                    command.Parameters.AddWithValue("@Field", customField);
+                    command.Parameters.AddWithValue("@Value", customValue);
 
                     return ReadSingleUserDynamic(command);
                 }
