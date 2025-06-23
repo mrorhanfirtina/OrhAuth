@@ -1178,6 +1178,25 @@ namespace OrhAuth.Services
             }
         }
 
+        public dynamic GetUserDynamicByValues(string customField1, string customValue1, string customField2, string customValue2)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                // 🛠️ Dikkat: Field1 ve Field2 doğrudan SQL'e ekleniyor (parametre yapılamaz!)
+                string query = $"SELECT * FROM Users WHERE [{customField1}] = @Value1 AND [{customField2}] = @Value2";
+
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Value1", customValue1);
+                    command.Parameters.AddWithValue("@Value2", customValue2);
+
+                    return ReadSingleUserDynamic(command);
+                }
+            }
+        }
+
         /// <summary>
         /// Retrieves a dynamic user object from the database based on the specified filter expression.
         /// The returned object includes both standard User properties and extended fields from the database,
@@ -1356,6 +1375,8 @@ namespace OrhAuth.Services
                 return null;
             }
         }
+
+        
 
         #endregion
     }
